@@ -1,0 +1,152 @@
+% [tags, t, x, y, z, NIDAQ_Out] = Capture3D(Timeout, SampRate, NIDAQ_Channels);
+%   tags returns fluorescence photon time tags
+%   t returns xyz sample times
+%   x, y, z return stage position
+%   Timeout in seconds, defaults to 10
+%   SampRate in Hz, defaults to 1000
+%   NIDAQ_Channels is a vector of additional channels (from 3 to 7) to read off 
+%       the DAQ board.  Defaults to [].
+%   NIDAQ_Out is the NIDAQ data recorded on the additional channels.
+%
+%   See also acquire, capture3d_mod, rttags, rttrace
+%
+% Version 1.1 Updated May 15, 2008 by KM
+function [tags, t, x, y, z, NIDAQ_Out] = Capture3D6(Timeout,SampRate,daqState)
+
+global LineState;
+%global APDS;
+global ar;
+
+if isempty(find(LineState,1)),
+    error('You should probably turn on a detector first.');
+end;
+% if isempty(find(APDS,1)),
+%     error('You should probably record on at least one APD.');
+% end;
+
+%display(sprintf('APDS with open gates: %s\n',num2str(find(LineState>0))));
+%                      
+% chan0 = -1;
+% if APDS(1) || APDS(2),
+%     %fprintf('Board 0: ');
+% 
+%     if APDS(1) && APDS(2),
+%         chan0 = 2;
+%         %fprintf('Measuring fluorescence on both APDs.\n');
+%     else if APDS(1),
+%             chan0 = 0;
+%             %fprintf('Measuring fluorescence on APD 0\n');
+%         else if APDS(2),
+%                 chan0 = 1;
+%                 %fprintf('Measuring fluorescence on APD 1\n');
+%             end;
+%         end;
+%     end;
+% end;
+% 
+% chan1 = -1;
+% if APDS(3) || APDS(4),
+%     %fprintf('Board 1: ');
+% 
+%     if APDS(3) && APDS(4),
+%         chan1 = 2;
+%         %fprintf('Measuring fluorescence on both APDs.\n');
+%     else if APDS(3),
+%             chan1 = 0;
+%             %fprintf('Measuring fluorescence on APD 0\n');
+%         else if APDS(4),
+%                 chan1 = 1;
+%                 %fprintf('Measuring fluorescence on APD 1\n');
+%              end;
+%         end;
+%     end;
+% end;
+    
+
+%Timeout = min(Timeout, 100); % Default maximum, just to prevent accidentally long acquisitions
+
+recChannels=find(daqState>0);
+if not(isempty(recChannels))
+    display(sprintf('Recording DAQ channels : %s',num2str(recChannels-1)));
+    ar = SetupAnalogRead(recChannels-1, SampRate, Timeout);
+else
+    display('Recording DAQ channels : none');
+end
+
+%TriggerAnalogRead(ar); % 8/19/08 Trigger is now done by rttags().
+% 
+% if chan0 > -1 && chan1 > -1,
+%     numChan = 2 + (chan0 == 2) + (chan1 == 2);
+%     if numChan == 2,
+%         [time0, time1] = rttags_sync5(2e7, Timeout, chan0, chan1);
+%         tags = {time0, time1};
+%     else if numChan == 3,
+%             [time0, time1, time2] = rttags_sync5(2e7, Timeout, chan0, chan1);
+%             tags = {time0, time1, time2};
+%         else if numChan == 4,
+%                 [time0, time1, time2, time3] = rttags_sync5(2e7, Timeout, chan0, chan1);
+%                 tags = {time0, time1, time2, time3};
+%             end;
+%         end;
+%     end;
+% end;
+% 
+% if chan0 > -1 && chan1 == -1,
+%     chan = chan0;
+%     if chan == 2,
+%         [tags0, tags1] = rttags5(0, 2e7, Timeout, chan);
+%         tags = {tags0, tags1};
+%     else
+%         tags0 = rttags5(0, 2e7, Timeout, chan);
+%         tags = {tags0};
+%     end;
+% end;
+
+% if chan0 == -1 && chan1 > -1,
+%     chan = chan1;
+%     if chan == 2,
+%         [tags0, tags1] = rttags5(1, 2e7, Timeout, chan);
+%         tags = {tags0, tags1};
+%     else
+%         tags0 = rttags5(1, 2e7, Timeout, chan);
+%         tags = {tags0};
+%     end;
+% end;
+
+if ~(isempty(recChannels))
+    data = GetAnalogData(ar);
+    t = ((0:(size(data, 1)-1))./SampRate)';
+    
+    if daqState(1)
+        x = data(:, 1) * 10;
+    else
+        x=[];
+    end;
+    
+    if daqState(2)
+        y = data(:, 2) * 10;
+    else
+        y=[];
+    end;
+    
+    if daqState(3)
+        z = data(:, 3) * 4;
+    else
+        z=[];
+    end;
+
+    if ~isempty(x),
+        NIDAQ_Out = data(:, 4:end);
+    else
+        NIDAQ_Out = data;
+    end;
+else
+    x=[];
+    y=[];
+    z=[];
+    t=[];
+    NIDAQ_Out=[];
+end
+
+tags=1;
+return;

@@ -1,0 +1,8 @@
+%i got some msd fit parameters stored as xyz and want to covert it to a
+%series of structures that use its elements to represent 1 2 and 3. 
+function fit123=fitconver(fitxyz)
+
+fit123(1).D=fitxyz.Dx;
+fit123(2).D=fitxyz.Dy;
+fit123(3).D=fitxyz.Dz;
+

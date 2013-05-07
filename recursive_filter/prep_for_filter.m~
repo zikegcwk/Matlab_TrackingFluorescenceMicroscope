@@ -1,0 +1,67 @@
+function prep_for_filter(input_path, output_path);
+sim_D_list = [linspace(0.001, 0.1, 20)];
+dt = 0.05;
+
+% Parameters defining the beam profile for the filter to assume
+GammaL = 4;
+GammaR = 1e6;
+GammaB = 2.5;
+P0 = 75;
+w0 = 0.5;
+lambda = 0.532;
+
+% Parameters defining the spatial grid for the filter to use
+dr = 0.05;
+dz = 0.1;
+Rmax = 1.25;
+Zmax = 3;
+
+% Parameters defining the spatial region to define as the detection volume
+rcyl = 0.3;
+hcyl = 0.6;
+focalind = focal_indices(dr, dz, Rmax, Zmax, rcyl, hcyl);
+
+chdir(input_path);
+u = dir;
+a = {u.name};
+
+for ii = 3:length(a),
+    chdir(a{ii});
+    load data;
+    chdir('..');
+    
+    signal = atime2bin(t0, dt);
+    
+    xi1 = atime2bin(sp1_data, dt);
+    xi2 = atime2bin(sp2_data, dt);
+    
+    xi1(end+1:enforce_xi_length) = 0;
+    xi2(end+1:enforce_xi_length) = 0;
+        
+    D_list = sim_D_list; %[sim_D_list(1)];
+    m_list = [1 1];
+    % We add poisson noise to the signals for the homogeneous samples in 
+    % order to give them the appropriate noise power
+    signal = xi1 + poissrnd(dt*sim_GammaB, size(xi1));
+    
+    save(strcat(rel_output_path, sprintf('/sp1_data_binary_filter%d', sig_num)), 'dt', 'signal', 'D_list', 'm_list', 'GammaL',...
+                 'GammaB', 'GammaR', 'P0', 'w0', 'lambda', 'dr', 'dz', 'Rmax', 'Zmax', 'focalind');
+
+    D_list = sim_D_list; %[sim_D_list(2)];
+    m_list = [1 1];
+    signal = xi2 + poissrnd(dt*sim_GammaB, size(xi2));
+        
+    save(strcat(rel_output_path, sprintf('/sp2_data_binary_filter%d', sig_num)), 'dt', 'signal', 'D_list', 'm_list', 'GammaL',...
+                 'GammaB', 'GammaR', 'P0', 'w0', 'lambda', 'dr', 'dz', 'Rmax', 'Zmax', 'focalind');
+    
+    D_list = sim_D_list;
+    m_list = [1 1];
+    signal = xi1 + xi2;
+    
+    save(strcat(rel_output_path, sprintf('/binary_data_%d', sig_num)), 'dt', 'signal', 'D_list', 'm_list', 'GammaL',...
+                 'GammaB', 'GammaR', 'P0', 'w0', 'lambda', 'dr', 'dz', 'Rmax', 'Zmax', 'focalind');
+
+    fprintf('Data for signal pair %d written.\n', sig_num);
+end;
+chdir('../..');
+fprintf('All done.\n');

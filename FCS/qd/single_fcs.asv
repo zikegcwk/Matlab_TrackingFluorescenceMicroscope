@@ -1,0 +1,85 @@
+%function single_fcs calculate FCS curves for file_N files and average them.
+%The taumin and taumax are to specify the limite of tau. N is the number of
+%points calculated in tau. 
+
+
+function g2=single_fcs(s_N,e_N,t_min,t_max,taumin,taumax,N,plot_flag),
+
+
+ 
+if nargin==1
+    e_N=s_N;
+    taumin=-5;
+    taumax=-1;
+    N=300;
+    t_min=0;
+    t_max=60;
+    plot_flag=1;
+end
+
+if nargin==2
+    taumin=-5;
+    taumax=-1;
+    N=300;
+    t_min=0;
+    t_max=60;
+    plot_flag=1;
+end
+
+
+if nargin==4
+    taumin=-5;
+    taumax=-1;
+    N=300;
+    plot_flag=1;
+    
+end
+
+
+
+      
+        
+   if s_N==e_N
+        
+        %calculate the auto and cross correlation functions. 
+       [tau,g2]=lfcs_zk(s_N,taumin,taumax,N,t_min,t_max);
+    
+    
+       
+   else 
+        for j=s_N:1:e_N
+           [tau,g2_temp(j,:)]=lfcs_zk(j,taumin,taumax,N,t_min,t_max);
+            %give the average correlation values from 10^-5 to 10^-4
+      
+            ave_gR=mean(gR,1);
+            ave_gG=mean(gG,1);
+            ave_gX=mean(gX,1);
+
+   end
+
+if plot_flag==1
+   scrsz = get(0,'ScreenSize');
+
+    figure('Name',cd,'Position',[1 scrsz(4)/2-100 scrsz(3) scrsz(4)/2-100])
+    
+    subplot(1,3,1);
+    semilogx(tau,ave_gR,'b');
+    xlabel('correlation time scale (S)','FontSize',14);
+    ylabel('Auto-correlation value','FontSize',14);
+    title('Atto425 Auto-Correlation','Color','r','FontSize',14);
+
+    subplot(1,3,2)
+    semilogx(tau,ave_gG,'g');
+    xlabel('correlation time scale (S)','FontSize',14);
+    ylabel('Auto-correlation value','FontSize',14);
+    title('Atto532 Auto-Correlation','Color','r','FontSize',14);
+
+    
+    subplot(1,3,3)   
+    semilogx(tau,ave_gX,'r');
+    xlabel('correlation time scale (S)','FontSize',14);
+    ylabel('Cross-correlation value','FontSize',14);
+    title('Cross-Correlation','Color','r','FontSize',14);
+else
+    
+end

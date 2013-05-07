@@ -1,0 +1,29 @@
+function [g0,tau,g1] = all_traces_fcs_bin(taumin,taumax,Ntau, dt),
+
+if nargout == 0,
+    error('This will be a waste of time.');
+end;
+
+if nargin < 4,
+    error('At least three arguments required.');
+end;
+
+data_traces;
+Ntraces = size(traces, 1);
+g0 = zeros(Ntraces, Ntau-1);
+g1 = g0;
+
+tau = logspace(taumin,taumax,Ntau);
+
+for u = 1:Ntraces,
+    load(sprintf('data_%g', traces(u, 1)));
+    data0 = tags{1}(find(tags{1} > traces(u, 2) & tags{1} < traces(u, 3)));
+    data1 = tags{2}(find(tags{1} > traces(u, 2) & tags{1} < traces(u, 3)));
+    [i0,t0] = atime2bin(data0, dt);
+    [i1,t1] = atime2bin(data1, dt);
+    [g0, tau] = computeFCS(i0,dt);
+    [g1,tau] = computeFCS(i1
+end;
+
+return;
+

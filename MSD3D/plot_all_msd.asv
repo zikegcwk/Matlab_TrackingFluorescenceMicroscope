@@ -1,0 +1,30 @@
+function plot_all_msd(dt,dx,dy,dz)
+temp=size(dt);
+N=temp(1,1);
+
+
+
+figure_number=floor(N/15);
+
+for j=1:1:figure_number
+    figure;
+    for k=1:1:15
+        subplot(3,5,k)
+        semilogx(dt(),dx((j-1)*15+k,:));
+        axis tight;
+        title(sprintf('%g',(j-1)*15+k));
+    end
+end
+
+
+figure
+
+    
+    for k=1:1:(N-figure_number*15)
+        subplot(3,5,k)
+        semilogx(tau,A(figure_number*15+k,:));
+        axis tight;
+        title(sprintf('%g',figure_number*15+k));
+    end
+
+        

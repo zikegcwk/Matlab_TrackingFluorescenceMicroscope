@@ -1,0 +1,59 @@
+function  output = FRETPeakdist(filenumber1,filenumberlast)
+% Collects FRET (dwell-averaged) for each molecule and plots a histogram of
+% average Low and High FRET states. Still gives some NaNs, but generally
+% works.
+for i=filenumber1:filenumberlast
+    filename = strcat('(kinetics)cascade', num2str(i),'(4).dat');
+    try
+        Kin = importdata(filename);
+        k=1;
+        TimeLow(k,1) = 0;
+        TimeAvLow(k,1) = 0;
+        TimeHigh(k,1) = 0;
+        TimeAvHigh(k,1) = 0;
+        for j=2:(length(Kin))
+                        
+            if Kin(j,1)==0
+%                 
+                TimeLow(k,1) = TimeLow(k,1) + (isfinite(Kin(j,2))*Kin(j,2));
+                TimeAvLow(k,1) = TimeAvLow(k,1) + (isfinite(Kin(j,2))*isfinite(Kin(j,2))*Kin(j,2)*Kin(j,3));
+%                 isfinite(Kin(j,2))
+%                 isfinite(Kin(j,3))
+%                 return
+            elseif Kin(j,1)==3
+                TimeHigh(k,1) = TimeHigh(k,1) + (isfinite(Kin(j,2))*Kin(j,2));
+                TimeAvHigh(k,1) = TimeAvHigh(k,1) + (isfinite(Kin(j,2))*isfinite(Kin(j,2))*Kin(j,2)*Kin(j,3));
+                
+            elseif Kin(j,1)==9&&Kin(j,2)==9
+                
+                TimeAvLow(k,1) = TimeAvLow(k,1)/TimeLow(k,1);
+                TimeAvHigh(k,1) = TimeAvHigh(k,1)/TimeHigh(k,1);
+%                 TimeLow(k,1)
+%                 TimeAvLow(k,1)
+%                 TimeHigh(k,1)
+%                 TimeAvHigh(k,1)
+                k=k+1;
+                TimeLow(k,1) = 0;
+                TimeAvLow(k,1) = 0;
+                TimeHigh(k,1) = 0;
+                TimeAvHigh(k,1) = 0;
+%                 return
+            else
+            end
+        
+            
+        end
+
+%         return
+        PeakHist = [TimeAvLow TimeAvHigh];
+        outputfilename = strcat('(PeakHist)cascade',num2str(i),'(4).traces');
+        fid = fopen(outputfilename,'w');
+        fprintf(fid,'%4.3f %4.3f\n',PeakHist');
+        fclose(fid);
+        hist(PeakHist)
+    catch
+        strcat('error, possibly file ',filename,'  missing')
+    end
+end
+
+              

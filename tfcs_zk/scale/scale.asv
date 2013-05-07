@@ -1,0 +1,15 @@
+%function c=scale(ref,data) takes two input (have to be the same size) and
+%multiply data with c to match ref. It outputs the scale.
+
+%works by fminsearch
+
+function c=scale(ref,data)
+
+fminsearch(@data_ref_diff
+
+
+
+function d=data_ref_diff(ref,data,c)
+
+temp_d=(c*data-ref).^2
+d=sum(tem_d);

@@ -1,0 +1,87 @@
+%   ACQUIRE2  acquires 3d tracking data and saves it in the current
+%   directory.
+%
+%   Acquire2(file_start, file_end, run_time) acquires (file_end -
+%   file_start) segments of data, each of duration run_time.  Data is saved
+%   to files named as 'data_filenum' where filenum is a number between
+%   file_start and file_end.
+%
+%   Acquire2(file_start, file_end, run_time, field, value) 
+%
+%   See also capture3d, rttags, rttrace, drawplots3d
+%
+% Version 1.1 Updated Oct 1, 2008 by CL
+function Acquire2(nruns, run_time,varargin)
+global DAQ_PARAMS;
+global LOCK_PARAMS;
+global CHANNELS_DESC;
+global SAMPLE_DESC;
+global SETTINGS;
+global LineState;
+
+if(nruns>99)
+    warning('MATLAB:paramAmbiguous','Aquisition limited to 999 runs. 999 runs will be recorded');
+    nruns=99;
+end
+
+if nargin>3
+for i=1
+    
+    setParameters(varargin{:});
+else
+    gainXYspan=LOCK_PARAMS.GainXY;
+    gainZspan=LOCK_PARAMS.GainZ;
+end
+nspanXY=length(gainXYspan);
+nspanZ=length(gainZspan);
+ntotalruns=nspanXY*nspanZ*nruns;
+if(ntotalruns>999)
+    errors('Gain sweeping leads to more 999 runs. Reduce number of runs of sweeping range.');
+end
+
+files=dir('data_*.mat');
+filesnames=files(:).name;
+filesnamesCell=struct2cell(filesnames);
+n=length(filesnamesCell);
+M=zeros(n,1);
+for i=1:n
+    cs=filesnamesCell{i};
+    M(i)=str2num(cs(6:end-4));
+end
+file_start=max(M)+1;
+
+
+if (SETTINGS.promptOD)
+    od=input('Enter OD : ');
+    if not(od>=0) 
+        error('OD must be >=0');
+    end
+    SAMPLE_DESC.od=od;
+end
+
+cfile=file_start;
+sampleTag=datestr(now,'yyyymmdd_HHMMSS');
+for u = 1:nruns
+    fprintf('Beginning run %g...\n',u);
+    for i=1:nspanXY
+    for j=1:nspanZ
+        SAMPLE_DESC.tag=sampleTag;
+        LOCK_PARAMS.gainXY=gainXYspan(i);
+        LOCK_PARAMS.gainZ=gainZspan(j);
+        SetLockIn(LOCK_PARAMS);
+        %here update the gui
+        display(sprintf('Acquiring with GainXY=%d, GainZ=%s',gainXYspan(i),gainZspan(j)));
+    
+    
+    [tags, t0, x0, y0, z0, daq_out] = Capture3D2(run_time, DAQ_PARAMS.sampRate, DAQ_PARAMS.daqChannels);
+    filename=sprintf('data_%g.mat',cfile);
+    
+    fprintf('Acquisition complete.  Saving to file %s.\n', filename);
+   
+    save(filename, 'tags', 'x0', 'y0', 'z0', 't0', 'daq_out','SAMPLE_DESC','DAQ_PARAMS','LOCK_PARAMS','CHANNELS_DESC','LineState','run_time');
+    cfile=cfile+1;
+    end
+    end
+end
+
+ 

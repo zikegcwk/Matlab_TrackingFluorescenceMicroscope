@@ -1,0 +1,135 @@
+function sorted = molecule_2_analyze(data,concatenate,slop, grouping,dltag,tracelength,signal_to_noise,...
+    mean_intensity,new_id,signal_to_noise_method)
+
+
+sorted={};
+
+for i=1:size(grouping,1);
+   
+    tempgroup=grouping{i};
+    
+    for j=2:size(tempgroup,2)   
+    temp_sorted={};   
+    positions = find([data{:,1}]==tempgroup(1) & [data{:,3}]==tempgroup(j) );
+    temp_sorted = data(positions,:);
+    sorted = cat(1, sorted, temp_sorted);
+    end
+end
+% eliminatemolecules = find(sorted(:,sortparameter)<=3.5);
+% sorted(eliminatemolecules,:)=[];
+a=sorted;
+ [[a{:,1}]' [a{:,3}]' ]
+ 
+ signal_to_noise_types = cell2mat(sorted(:,24));
+ 
+ sorting signal_to_noise_types(:,signal_to_noise_method)
+ mat2cell(signal_to_noise_types(:,signal_to_noise_method), ones(60,1), [1 ])
+ 
+ 
+positions = find(   [sorted{:,12}]< dltag(1) |  [sorted{:,12}] >dltag(2)|...
+                    [sorted{:,13}]< tracelength(1) |  [sorted{:,13}] >tracelength(2) |...
+                    [sorted{:,24}]< signal_to_noise(1) |  [sorted{:,24}] >signal_to_noise(2) |...
+                    [sorted{:,25}]< mean_intensity(1) |  [sorted{:,25}] >mean_intensity(2) );            
+
+sorted(positions,:)=[];
+
+% 
+% positions = find(   [sorted{:,13}]< tracelength(1)  );            
+% sorted(positions,:)=[];
+%  
+% positions = find(   [sorted{:,13}] >tracelength(2)  );            
+
+
+% this section will add a numberialc 1 to n ID for arbitray groupoing of
+% which can then be used to overlay data
+% Setion added by Max on 100708 allows regrouping of molecules
+
+if iscell(new_id) == true
+  
+    resorted={};
+    
+    for i =1:size(new_id,1)
+    
+        togroup = new_id{i};
+        
+        for k = 1:size(togroup,1)
+            
+            tempgroup =  togroup{k};
+        
+        for j=2:size(tempgroup,2)             
+            temp_sorted={};   
+            positions = find([sorted{:,1}]==tempgroup(1) & [sorted{:,3}]==tempgroup(j) );
+            temp_sorted = sorted(positions,:);
+        for l=1:size(temp_sorted,1)  
+            
+            temp_sorted{l,8}=i;
+        end
+        
+            resorted = cat(1, resorted, temp_sorted);      
+        end
+        end
+    end
+           
+           
+        sorted = resorted;
+            
+end
+        
+        
+        
+    
+if concatenate == true
+    
+ % start of code for concatenating molecules
+ cat_molecules=[];
+ i=1;
+ while  [sorted{i,1}] ~=2
+     
+%  temppositions = find(      [sorted{:,6}]>=[sorted{i,6}]-slop & ...
+%                             [sorted{:,6}]<=[sorted{i,6}]+slop & ...
+%                             [sorted{:,7}]>=[sorted{i,7}]-slop & ...
+%                             [sorted{:,7}]<=[sorted{i,7}]+slop & ...
+%                             [sorted{:,3}]==[sorted{i,3}]      & ...
+%                             [sorted{:,4}]==[sorted{i,4}]      & ...
+%                             [sorted{:,1}]~=[sorted{i,1}]      ) ;
+        
+ temppositions = find(      [sorted{:,6}]>=[sorted{i,6}]-slop & ...
+                            [sorted{:,6}]<=[sorted{i,6}]+slop & ...
+                            [sorted{:,7}]>=[sorted{i,7}]-slop & ...
+                            [sorted{:,7}]<=[sorted{i,7}]+slop & ...
+                            [sorted{:,3}]==([sorted{i,3}]) & ...
+                            [sorted{:,1}]~=[sorted{i,1}]      ) 
+                        
+                        
+% temppositions = find(      [sorted{:,6}]>=[sorted{i,6}]-slop & ...
+%                             [sorted{:,6}]<=[sorted{i,6}]+slop & ...
+%                             [sorted{:,7}]>=[sorted{i,7}]-slop & ...
+%                             [sorted{:,7}]<=[sorted{i,7}]+slop & ...
+%                             [sorted{:,3}]==[sorted{i,3}] & ...
+%                             [sorted{:,3}]==[sorted{i,3}]      ) ;
+
+                        
+                   
+if isempty(temppositions) == false
+     
+    temp_cat        = cat(1,sorted(i,:),sorted(temppositions,:));
+    cat_molecules   = cat(1,cat_molecules,temp_cat);
+    temp_cat=[];
+    temppositions=[];
+    i=i+1;
+else
+    i=i+1;
+end  
+ end
+sorted = [];
+sorted = cat_molecules;
+
+end
+
+        
+        
+    
+    
+
+
+ output=sorted;

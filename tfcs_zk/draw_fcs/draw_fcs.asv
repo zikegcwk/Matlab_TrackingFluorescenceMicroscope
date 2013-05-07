@@ -1,0 +1,64 @@
+%function draw_fcs takes tau and g2 and plot the fcs data. 
+%note that g2 can be k by N, in which k is the number of FCS traces and N
+%is the number of data points in each fcs curve.
+
+function draw_fcs(tau,g2,color)
+
+color
+
+if nargin<3
+    color=1;
+end
+
+
+if color == 1;
+    paint=[235/255,255/255,235/255];
+elseif color ==2;
+    paint=[201/255,201/255,201/255];
+elseif color ==3;
+    paint=[255/255,240/255,245/255];
+elseif color ==4;255-222-173
+    paint=[255/255,2/255,201/255];
+elseif color ==5;230-230-250
+    paint=[201/255,201/255,201/255];
+elseif color ==6;255-250-205
+    paint=[201/255,201/255,201/255];
+    
+    
+end
+
+
+
+ave_g2=mean(g2);
+
+std_g2=std(g2,0,1);
+
+figure;
+
+% h1=area(tau,ave_g2+std_g2,'FaceColor',[1,0,0],'EdgeColor',[1,0,0]);
+% set(gca,'Xscale','log')
+% hold on;
+% %figure
+% h2=fill(tau,ave_g2-std_g2,'FaceColor',[0,1,0],'EdgeColor',[1,1,0]);
+% min(ave_g2-std_g2)
+% set(h1,'BaseValue',min(ave_g2-std_g2))
+% set(h2,'BaseValue',min(ave_g2-std_g2))
+% set(gca,'Layer','top')
+% plot(tau,ave_g2,'Color',[1,1,1])
+% set(gca,'Xscale','log')
+
+top_fill=[ave_g2+std_g2 ave_g2(length(tau))+std_g2(length(tau)) min(ave_g2-std_g2) min(ave_g2-std_g2) ];
+bottom_fill=[ave_g2-std_g2 ave_g2(length(tau))-std_g2(length(tau)) min(ave_g2-std_g2) min(ave_g2-std_g2) ];
+
+tau_fill=[tau max(tau) max(tau) min(tau) ];
+
+
+
+fill(tau_fill,top_fill,paint,'EdgeColor','k')
+
+hold on;
+fill(tau_fill,bottom_fill,'w','EdgeColor','k')
+axis([min(tau) max(tau) min(ave_g2-std_g2) max(ave_g2+std_g2)]);
+set(gca,'Xscale','log')
+plot(tau,ave_g2,'Color','r','LineWidth',1)
+box on;

@@ -1,0 +1,12 @@
+%function bootstrap_D looks into file data_filenum.dat and extract
+%diffusion coefficient and confidence intervals using bootstrap method. 
+function [D,stdD]=bootstrap_D(filenum,t1,t2,dt)
+
+%get all the iid variables for boostrap. 
+[dx,dy,dz]=Delta_Extract(filenum,t1,t2,dt);
+
+BDx=boostrp(1500,@D_dx,dx);
+BDy=boostrp(1500,@D_dx,dy);
+BDz=boostrp(1500,@D_dx,dz);
+
+D(1)=

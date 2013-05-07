@@ -1,0 +1,12 @@
+function plot_lifetime_fits(cellix, tau, gcell, rate, offset, baseline);
+
+g = inline('beta(1)*(1-exp(-beta(2)*abs(t)/1e-9)) + beta(3)', 'beta', 't');
+
+for u = 1:length(cellix),
+    index = cellix(u);
+    for v = 1:length(gcell{index}),
+        figure(u*100+v);
+        hold on;
+        plot(tau, gcell{ix}(v, :));
+        plot(tau, g([offset{cellix(u)}(v), rat], tau));
+        

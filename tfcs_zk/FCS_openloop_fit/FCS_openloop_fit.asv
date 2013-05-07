@@ -1,0 +1,41 @@
+function [N,D]=FCS_diffusion_fit(tau,g2,wxy,wz)
+
+
+
+
+f2fit=@(parameters,tau) FCS_openloop(tau,wxy,wz,parameters(1),parameters(2));
+
+%initial estimates for number of molecules inside laser focus
+parameters_1_guess=1/0.50;
+%initial estimates for diffusion coefficient.
+parameters_2_guess=55;
+
+[parameters_fit,r]=nlinfit(tau,g2,f2fit,[parameters_1_guess,parameters_2_guess]);
+
+
+
+figure;
+semilogx(tau,g2,'-or','MarkerSize',4,'MarkerFaceColor','r');
+hold on;
+semilogx(tau,FCS_openloop(tau,wxy,wz,parameters_fit(1),parameters_fit(2)),'LineWidth',2);
+
+disp(sprintf('Number of moleculess inside laser focus is: %g',parameters_fit(1)))
+disp(sprintf('diffusion coefficient is: %g um^2/s',parameters_fit(2)));
+
+
+
+
+
+
+
+
+
+
+
+function g2tau=FCS_openloop(t,wwxy,wwz,NN,DD)
+
+tau_D=wwxy^2/(4*DD);
+tau_D_prime=wwz^2/(4*DD);
+
+g2tau=(1/NN)*(1./(1+t/tau_D)).*(1./(1+t/tau_D_prime).^0.5);
+

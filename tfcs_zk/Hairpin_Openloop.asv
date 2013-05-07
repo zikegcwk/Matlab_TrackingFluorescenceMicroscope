@@ -1,0 +1,24 @@
+% things that I want Hairpin_Openloop do: 
+% take a general g2, with its 7 cell (2A, 2D, 2X and one string
+% description) and spill out the rates, with plots such as overlayed
+% normalized FCS plots 
+
+
+
+
+function Hairpin_Openloop(tau,g2,t_tide,wxy,wz,Q)
+
+%1. Normalize the total set of g2 by the first g2 curve. The first curve is
+%normalize to 1 and tide at t_tide.
+%2. plot these g2 curves with error bars.
+
+
+%plot the raw data
+fcs_plot(tau,g2);
+%normalize the raw data
+[N,g2_N]=fcs_N(tau,g2,t_tide);
+%plot the normalized data
+fcs_plot(tau,ribo_N);
+%get the reaction data by division
+[tau_c,g2_Nc]=fcs_chopper(tau,g2_Nc,t_tide);
+fcs_plot(tau_c,ri_Nc)

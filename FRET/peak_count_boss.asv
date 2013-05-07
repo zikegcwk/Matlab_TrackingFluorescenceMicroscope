@@ -1,0 +1,39 @@
+%function peak_count_boss look into tags 1 and 2 and find number of peaks
+%in tags1 and 2 as well as peaks that are colocalized. 
+
+function [N1,N2,Nx]=peak_count_boss(tags1,tags2,dt,level)
+
+plot_flag=0
+
+[pk_time1,pk_index1,pk_count1]=peak_detector_boss(tags1,dt,level,plot_flag);
+[pk_time2,pk_index2,pk_count2]=peak_detector_boss(tags2,dt,level,plot_flag);
+
+
+%number of counts in tags1 and tags2. 
+N1=length(pk_index1);
+N2=length(pk_index2);
+
+
+
+
+if N2>N1
+    for j=1:1:N1
+        close_index=dsearchn(pk_time2',pk_time1(j));
+        close_time=pk_time2(close_index);
+        
+    
+    
+elseif N1>N2
+    
+    
+else
+    
+    
+end
+
+for j=1:1:N_pk
+    %find the right time spot and assign Don_pk_index. 
+    Don_pk_index(j)=dsearchn(Don_t',Acp_pk_time(j));
+    Don_pk_time(j)=Don_t(Don_pk_index(j))
+     
+end

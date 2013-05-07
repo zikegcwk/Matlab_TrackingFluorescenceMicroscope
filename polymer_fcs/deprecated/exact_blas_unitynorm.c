@@ -1,0 +1,198 @@
+#include <mex.h>
+#include <matrix.h>
+#include <stdlib.h>
+#include <math.h>
+
+/* required arguments (in order):
+	sigmaxy
+	sigmaz
+	gamxy
+	gamz 
+	wxy
+	wz
+	L
+	b
+	tau1
+	a
+	y_over_L
+	tau
+*/
+
+/* This function normalizes the computed FCS curves so that g_2(0) = 1; for
+ * standard FCS normalization (with g_2(0) = variance / mean^2) use the function
+ * exact_blas.c */
+
+/* Compilation notes: To include BLAS library, use the command:
+ * in windows: 'mex exact_blas_unitynorm.c C:\program files\matlab\R2007b\extern\lib\win32\*COMPILER*\libmwblas.lib
+ * in UNIX: 'mex exact_blas_unitynorm.c -lmwblas -D__UNIX'
+ */
+
+#define MAX_P 1000
+#define __DEBUG
+
+#ifdef __UNIX
+void dgemv_(char *, int *, int *, double *, double *, int *, double *, int *, double *, double *, int *);
+#else
+void dgemv(char *, int *, int *, double *, double *, int *, double *, int *, double *, double *, int *);
+#endif
+
+void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
+{
+	double sigmaxy, sigmaz, gamxy, gamz, wxy, wz, L, b, tau1, a;
+	double sigmaxy_sq, sigmaz_sq, wxy_sq, wz_sq;
+	double al_sq, *tau, *y_over_L;
+	double *static_xy, *static_z, dynamic_initial_xy, dynamic_initial_z;
+    double dynamic_xy, dynamic_z, dynamic_sys_xy, dynamic_sys_z;
+	double *g, gnorm0, gnorminf, tovertau, c, *cosmatrix, *pa, *pinv_sq, *expoval, *lmsum, zero = 0.0;
+	char notranspose = 'N';
+	int numDyes, numTau, l, m, u, numlm, p, one = 1, max_p = MAX_P;
+        
+	if(nrhs != 12) 
+		mexErrMsgTxt("This function requires 12 arguments. For argument list, see .c file.");
+	
+	sigmaxy = *(double *) mxGetPr(prhs[0]);
+	sigmaz = *(double *) mxGetPr(prhs[1]);
+	gamxy = *(double *) mxGetPr(prhs[2]);
+	gamz = *(double *) mxGetPr(prhs[3]);
+	wxy = *(double *) mxGetPr(prhs[4]);
+	wz = *(double *) mxGetPr(prhs[5]);
+	L = *(double *) mxGetPr(prhs[6]);
+	b = *(double *) mxGetPr(prhs[7]);
+
+    tau1 = *(double *) mxGetPr(prhs[8]);
+	a = *(double *) mxGetPr(prhs[9]);
+	
+	numDyes = mxGetN(prhs[10]);
+    y_over_L = (double *) mxGetPr(prhs[10]); /* vector of dye positions */
+
+    numTau = mxGetN(prhs[11]);
+	tau = (double *) mxGetPr(prhs[11]);
+    
+    if(nlhs > 1)
+        mexErrMsgTxt("This function only returns a single vector.");
+
+	plhs[0] = mxCreateDoubleMatrix(1, numTau, mxREAL);
+	g = mxGetPr(plhs[0]);
+
+    static_xy = (double *) malloc(numDyes*sizeof(double));
+    static_z = (double *) malloc(numDyes*sizeof(double));
+    
+    pinv_sq = (double *) malloc(MAX_P*sizeof(double));
+    pa = (double *) malloc(MAX_P*sizeof(double));
+    
+    numlm = numDyes*(numDyes + 1)/2;
+	cosmatrix = (double *) calloc(MAX_P*numlm, sizeof(double));
+	expoval = (double *) malloc(MAX_P*sizeof(double));
+	lmsum = (double *) calloc(numlm, sizeof(double));
+    
+    
+    sigmaxy_sq = sigmaxy*sigmaxy;
+	sigmaz_sq = sigmaz*sigmaz;
+	wxy_sq = wxy*wxy/4.0;
+	wz_sq = wz*wz/4.0;
+    
+    gnorm0 = 0.0;
+    gnorminf = 0.0;
+    
+    for(l=0;l<numDyes;l++) {
+        if(y_over_L[l] < 0 || y_over_L[l] > 1)
+            mexErrMsgTxt("Invalid value in vector y_over_L.\nAll values must lie between 0 and 1.");
+        al_sq = L*b/3 * ((y_over_L[l] - 0.5)*(y_over_L[l] - 0.5) + 1.0/12.0);
+        static_xy[l] = sigmaxy_sq + al_sq + wxy_sq;
+        static_z[l] = sigmaz_sq + al_sq + wz_sq;
+        
+        /* dynamic_initial will hold the (l, m)-dependent initial values of 
+         * the dynamic terms, which is needed for normalizing the FCS curve 
+         * to unity.
+         */
+        dynamic_initial_xy = sigmaxy_sq + L*b/6*
+          ((y_over_L[l]-0.5)*(y_over_L[l]-0.5) + (y_over_L[l]-0.5)*(y_over_L[l]-0.5) - fabs(y_over_L[l]-y_over_L[l])+1.0/6.0);
+        dynamic_initial_xy *= dynamic_initial_xy;
+
+        dynamic_initial_z = sigmaz_sq + L*b/6*
+          ((y_over_L[l]-0.5)*(y_over_L[l]-0.5) + (y_over_L[l]-0.5)*(y_over_L[l]-0.5) - fabs(y_over_L[l]-y_over_L[l])+1.0/6.0);
+        dynamic_initial_z *= dynamic_initial_z;
+
+        gnorm0 += 1.0/((static_xy[l]*static_xy[l] - dynamic_initial_xy)*sqrt(static_z[l]*static_z[l] - dynamic_initial_z));
+        gnorminf += 1.0/(static_xy[l]*static_xy[l]*sqrt(static_z[l]*static_z[l]));
+        
+        for(m=0;m<l;m++) {
+            dynamic_initial_xy = sigmaxy_sq + L*b/6*
+              ((y_over_L[l]-0.5)*(y_over_L[l]-0.5) + (y_over_L[m]-0.5)*(y_over_L[m]-0.5) - fabs(y_over_L[l]-y_over_L[m])+1.0/6.0);
+            dynamic_initial_xy *= dynamic_initial_xy;
+            
+            dynamic_initial_z = sigmaz_sq + L*b/6*
+              ((y_over_L[l]-0.5)*(y_over_L[l]-0.5) + (y_over_L[m]-0.5)*(y_over_L[m]-0.5) - fabs(y_over_L[l]-y_over_L[m])+1.0/6.0);
+            dynamic_initial_z *= dynamic_initial_z;
+            
+            gnorm0 += 2.0/((static_xy[l]*static_xy[m] - dynamic_initial_xy)*sqrt(static_z[l]*static_z[m] - dynamic_initial_z));
+            gnorminf += 2.0/(static_xy[l]*static_xy[m]*sqrt(static_z[l]*static_z[m]));
+        }
+    }
+    
+    gnorm0 = gnorm0/gnorminf - 1;
+
+   /* In the code below we create a matrix of the values 
+     * cos(\pi p y_l/L)*cos(\pi p y_m/L) for all p that we will sum over 
+     * and for all y_l, y_m pairs (of course, using the symmetry over these
+     * values, so that we don't compute more than we need to.  This matrix
+     * is indexed in column-major form, with dimension 
+     * (numDyes*(numDyes+1)/2) x MAX_P, so that multiplying the matrix by
+     * the vector of p values gives the sum over p, for all l,m, as a vector.
+    */
+    
+	for(p = 1; p <= MAX_P; p++) {
+        /* Store 1/p^2 because we will use it often */
+        pinv_sq[p-1] = 1.0/((double) p)/((double) p); 
+        /* Store p as a vector, because we will need it later for BLAS calls */
+        pa[p-1] = pow((double) p, a); 
+        for(l = 0; l < numDyes; l++)
+            for(m = 0; m <= l; m++)
+                cosmatrix[(p-1)*numlm + m + l*(l+1)/2] = cos(M_PI*p*y_over_L[l])*cos(M_PI*p*y_over_L[m]);
+    }
+    c = 2*L*b/3/M_PI/M_PI; /* Just a constant that appears often in the loop */
+
+    for(u=0; u < numTau; u++) {
+        /* store the systematic contributions to the dynamic terms because they do not depend on l,m */
+        dynamic_sys_xy = sigmaxy_sq*exp(-gamxy*tau[u]); 
+        dynamic_sys_z = sigmaz_sq*exp(-gamz*tau[u]);
+        
+        tovertau = tau[u]/tau1;
+		for(p=0; p < MAX_P; p++) 
+			expoval[p] = pinv_sq[p]*exp(-tovertau*pa[p]);
+		
+		/* Evaluate the sum over p for all values of l, m simultaneously: 
+         * We use the BLAS call dgemv 
+         */
+        #ifdef __UNIX
+        dgemv_(&notranspose, &numlm, &max_p, &c, cosmatrix, &numlm, expoval, &one, &zero, lmsum, &one);
+        #else
+        dgemv(&notranspose, &numlm, &max_p, &c, cosmatrix, &numlm, expoval, &one, &zero, lmsum, &one);
+        #endif  
+
+		g[u] = 0.0;
+		for(l=0; l < numDyes; l++) {
+            dynamic_xy = dynamic_sys_xy + lmsum[l + l*(l+1)/2];
+        	dynamic_z = dynamic_sys_z + lmsum[l + l*(l+1)/2];
+                
+            g[u] += 1/((static_xy[l]*static_xy[l] - dynamic_xy*dynamic_xy)*sqrt(static_z[l]*static_z[l]-dynamic_z*dynamic_z));
+	   		for(m=0; m < l; m++) {
+                dynamic_xy = dynamic_sys_xy + lmsum[m + l*(l+1)/2];
+        		dynamic_z = dynamic_sys_z + lmsum[m + l*(l+1)/2];
+
+                g[u] += 2/((static_xy[l]*static_xy[m] - dynamic_xy*dynamic_xy)*sqrt(static_z[l]*static_z[m]-dynamic_z*dynamic_z));
+			}
+		}
+        g[u] = (g[u]/gnorminf-1)/gnorm0;
+	}
+    free(static_xy);
+    free(static_z);
+    free(pinv_sq);
+    free(pa);
+    free(cosmatrix);
+	free(expoval);
+	free(lmsum);
+
+	return;
+}
+

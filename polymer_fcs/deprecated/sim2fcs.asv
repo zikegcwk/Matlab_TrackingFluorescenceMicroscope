@@ -1,0 +1,112 @@
+#include <mex.h>
+#include <matrix.h>
+#include <stdlib.h>
+#include <math.h>
+
+/* required arguments (in order):
+    t [Nt vector of times]	
+    Xcm [Ndim x Nt matrix of the center of mass of the tracking dyes]
+    Xprobe [Nprobedye x Ndim x Nt matrix of dye positions for probe beam] 
+    w [Ndim vector of beam waists]
+    gam [Ndim vector of tracking bandwidths]
+    locNoise [A 3xNt matrix of localization noises]
+ */
+double Phi(const double *, const int, const double *, const int, const double *);
+
+void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
+{
+	double *t;
+    int Nt, Ndim, Nprobe, i, j, k;
+    double *Xcm, *Xprobe, *Xs, *locNoise, *Gamma, *w, *gam;
+    double tt, dt;
+       
+    if(nrhs != 6) 
+		mexErrMsgTxt("This function requires 6 arguments. For argument list, see .c file.");
+	
+    t = (double *) mxGetPr(prhs[0]);
+    Nt = mxGetN(prhs[0]);
+    if(Nt < 2)
+        mexErrMsgTxt("At least two time points required.");
+    dt = t[1]-t[0];
+    
+    printf("Number of time points: %i\n", Nt);
+       
+    Xcm = (double *) mxGetPr(prhs[1]);
+    Ndim = mxGetDimensions(prhs[1])[0];
+    
+    Xprobe = (double *) mxGetPr(prhs[2]);
+    if(mxGetNumberOfDimensions(prhs[2]) != 3)
+        mexErrMsgTxt("Invalid probe dye matrix. Must be three-dimensional.");
+    else {
+        Nprobe = mxGetDimensions(prhs[2])[0];
+        if(Nprobe < 1)
+            mexErrMsgTxt("No probe dyes specified.");
+        
+        if(mxGetDimensions(prhs[2])[1] != Ndim)
+            mexErrMsgTxt("Probe dimensions incompatible with center of mass dimensions.");
+    }
+    
+    printf("Nprobe == %i\n", Nprobe);
+    
+    w = (double *) mxGetPr(prhs[3]);
+    if(mxGetN(prhs[3]) != Ndim)
+        mexErrMsgTxt("Beam waist dimensions incompatible with center of mass dimensions.");
+        
+    gam = (double *) mxGetPr(prhs[4]);
+    if(mxGetN(prhs[4]) != Ndim)
+        mexErrMsgTxt("Bandwidth dimensions incompatible with center of mass dimensions.");
+
+    locNoise = (double *) mxGetPr(prhs[5]);
+    if(mxGetDimensions(prhs[5])[0] != Ndim)
+        mexErrMsgTxt("Localization noise dimensions incompatible with center of mass dimensions.");
+    
+    if(nlhs < 1)
+        mexErrMsgTxt("No return argument.");
+     
+    plhs[0] = mxCreateDoubleMatrix(Nt, 1, mxREAL);
+    Gamma = mxGetPr(plhs[0]);
+    
+    if(nlhs < 2) {
+        Xs = (double *) calloc(Ndim*Nt, sizeof(double));
+    } else {
+        plhs[1] = mxCreateDoubleMatrix(Ndim, Nt, mxREAL);
+        Xs = mxGetPr(plhs[1]);
+    }
+        
+    if(nlhs > 2)
+        mexErrMsgTxt("Too many return arguments.");
+    
+    for(k = 0; k < Ndim; k++)
+        Xs[k] = dt*gam[k]*(Xcm[k] + locNoise[k]);
+    Gamma[0] = Phi(Xs, Ndim, Xprobe, Nprobe, w);
+    for(i = 1; i < Nt; i++) {
+        for(j = 0; j <= i; j++) {
+            tt = t[i] - t[j];
+            for(k = 0; k < Ndim; k++)
+                Xs[i*Ndim + k] += dt*gam[k]*exp(-gam[k]*tt)*(locNoise[j*Ndim + k] + Xcm[j*Ndim + k]);
+        }
+        Gamma[i] = Phi(Xs + i*Ndim, Ndim, Xprobe + i*Nprobe*Ndim, Nprobe, w);
+    }
+       
+    if(nlhs < 2)
+        free(Xs);
+    
+	return;
+}
+
+double Phi(const double *Xs, const int Ndim, const double *Xprobe, const int Nprobe, const double *w)
+/* Compute the fluorescence rate on the probe channel from the probe dye 
+ * positions Xprobe relative to the stage position Xs. */ 
+{
+    int i, j;
+    double ret = 0.0, exponent;
+    for(i=0; i<Nprobe; i++) {
+        exponent = 0;
+        for(j=0; j < Ndim; j++)
+            exponent += -2*(Xs[]-Xprobe[i + Nprobe*j])*(Xs[]-Xprobe[i + Nprobe*j])/(w[j]*w[j]);
+
+        ret += exp(exponent);
+    }
+    return ret;
+}
+

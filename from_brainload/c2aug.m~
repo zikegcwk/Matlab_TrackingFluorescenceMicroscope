@@ -1,0 +1,7 @@
+function aug_out = c2aug(c_in);
+
+if length(size(c_in)) ~= 2,
+    error('I do not understand.');
+end;
+
+if min(size

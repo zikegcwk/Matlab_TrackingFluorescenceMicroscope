@@ -1,0 +1,85 @@
+function output = selected_kinetics(start,stop,rule,threshold)
+% This script will be grabbing files starting at number "start" and stopping at "stop", traces files in the current directory collected at a certain frame
+% Let's have numerical rule descriptions for now:
+% Rule=1 is cutoff by total length of the trace
+if rule==1
+    for i=start:stop
+        filename = strcat('(kinetics)cascade', num2str(i),'(4)','.dat');
+        try
+            A = importdata(filename);            
+            B = A(1,:);
+            k=2;
+            ControlSum = 0;
+            threshold=threshold*1000/(A(1,2));
+            
+            for j=2:size(A,1)
+                if A(j,1)<9
+                    ControlSum = ControlSum+A(j,2);
+                elseif (A(j,1)==9)&&(ControlSum>threshold)
+                        B = [B;A(k:j,:)];
+                        ControlSum = 0;
+                        k = j+1;
+                elseif (A(j,1)==9)&&(ControlSum<=threshold)
+                      ControlSum = 0;
+                      k = j+1;
+                else 
+                    Error = 'Wrong values in kinetics file'
+                end
+            end
+
+            newfilename = strcat('(selkin)cascade', num2str(i),'(4)','.dat');
+            fid = fopen(newfilename, 'w');
+            fprintf(fid,'%d %d %4.3f\n',B');
+            fclose(fid);
+        catch
+            Error = 'Duhhh'%'Could not find a file with specified filename'
+        end
+        %k=k+1;
+    end
+    
+end
+output = 1;
+            %%%%%%%%%%%%Old version, gets too complicated%%%%%%%%%%%
+%             MolArray = zeros(1,1,3);
+%             SelectedMA = zeros(1,1,3);
+%             k=1; l=1; %Indexes for the 3D MolArray
+%             for j=2:size(A,1)%Let's unfold the data for each molecule into a separate sheet on a 3D MolArray
+%                 if A(j,1)<9
+%                   MolArray(k,l,1)=A(j,1);
+%                   MolArray(k,l,2)=A(j,2);
+%                   MolArray(k,l,3)=A(j,3);
+%                   l = l+1;
+%                 elseif A(j,1)==9
+%                   k=k+1;
+%                   l=1;
+%                 else
+%                     Error = 'Wrong value in kinetics array'
+%                 end
+%             end
+% %             TraceLengths = sum(MolArray,2);
+%             size(MolArray)
+%             return
+%             n=0;
+%             for k=1:size(MolArray,1)%Length cut-off executed in this loop
+%                 if TraceLengths(k)>(1000*threshold/A(1,2))
+%                     n=n+1;
+%                     SelectedMA(n,:,:) = MolArray(k,:,:);
+%                 else
+%                 end
+%             end
+%             %Now we can fold the data back into a single parsed array
+%             %containing only selected "longer than" molecules. Later can
+%             %add "shorter than" threshold2
+%             %SelectedMA
+%             
+%             SelectKin = zeros(1,3);
+%             SelectKin(1,:) = A(1,:);
+%             r=2;
+%             for p=1:size(SelectedMA,1)
+%                 for q=1:size(SelectMA,2)
+%                     SelectKin(r,:) = SelectedMA(p,q,:);
+%                     r=r+1;
+%                 end
+%                 SelectKin(r,:) = 9;
+%                 r=r+1;
+%             end

@@ -1,0 +1,18 @@
+Nsamp = 5;
+powerdat = zeros(Nsamp, 1);
+t = powerdat;
+tprev = 0;
+ar = SetupAnalogRead(4, 1, 30);
+%for u = 1:Nsamp,
+%    tic;
+%    fprintf('Reading sample %d\n', u);
+    TriggerAnalogRead(ar);
+    data = GetAnalogData(ar, 0);
+    
+    powerdat(u) = mean(data);
+    t(u) = tprev + toc;
+    tprev = t(u);
+    start(ar{1});
+end;
+
+save('LTPower', 't', 'powerdat');

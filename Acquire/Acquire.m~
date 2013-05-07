@@ -1,0 +1,85 @@
+%   ACQUIRE  acquires 3d tracking data and saves it in the current
+%   directory.
+%
+%   Acquire(file_start, file_end, run_time) acquires (file_end -
+%   file_start) segments of data, each of duration run_time.  Data is saved
+%   to files named as 'data_filenum' where filenum is a number between
+%   file_start and file_end.
+%
+%   Acquire(file_start, file_end, run_time, 1) records analog channel 3
+%   from the NiDAQ board and includes data from it in the saved file as
+%   'exI,' because this channel will usually record excitation intensity.
+
+function Acquire(file_start, file_end, run_time, getEx)
+
+if nargin < 3,
+    error('You must specifiy at least: file_start, file_end, run_time');
+end;
+
+if nargin < 4,
+    getEx = 0;
+end;
+
+for u=file_start:file_end,
+    if exist(strcat('./data_', num2str(u), '.mat'), 'file'),
+        error(strcat('File `data_', num2str(u), '.mat already exists.'));
+    end;
+end    
+    
+for u = file_start:file_end, 
+        if getEx,
+            [tags, t0, x0, y0, z0, ex1, ex2] = Capture3D(run_time, 1e3); 
+        else
+            [tags, t0, x0, y0, z0] = Capture3D(run_time, 1e3); 
+        end;
+        
+        tags0 = tags{1};
+        
+        if getEx,
+            if length(tags) == 1,
+                save(sprintf('data_%g', u), 'tags0', 'x0','y0','z0','t0', 'exI', 'ex2'); 
+            end;
+
+            if length(tags) == 2,
+                tags1 = tags{2};
+                save(sprintf('data_%g', u), 'tags0', 'tags1', 'x0','y0','z0','t0', 'exI', 'ex2'); 
+            end;
+
+            if length(tags) == 3,
+                tags1 = tags{2};
+                tags2 = tags{3};
+                save(sprintf('data_%g', u), 'tags0', 'tags1', 'tags2', 'x0','y0','z0','t0', 'exI', 'ex2'); 
+            end;
+
+            if length(tags) == 4,
+                tags1 = tags{2};
+                tags2 = tags{3};
+                tags3 = tags{4};
+                save(sprintf('data_%g', u), 'tags0', 'tags1', 'tags2', 'tags3', 'x0','y0','z0','t0', 'exI', 'ex2'); 
+            end;
+        else
+           if length(tags) == 1,
+                save(sprintf('data_%g', u), 'tags0', 'x0','y0','z0','t0'); 
+            end;
+
+            if length(tags) == 2,
+                tags1 = tags{2};
+                save(sprintf('data_%g', u), 'tags0', 'tags1', 'x0','y0','z0','t0'); 
+            end;
+
+            if length(tags) == 3,
+                tags1 = tags{2};
+                tags2 = tags{3};
+                save(sprintf('data_%g', u), 'tags0', 'tags1', 'tags2', 'x0','y0','z0','t0'); 
+            end;
+
+            if length(tags) == 4,
+                tags1 = tags{2};
+                tags2 = tags{3};
+                tags3 = tags{4};
+                save(sprintf('data_%g', u), 'tags0', 'tags1', 'tags2', 'tags3', 'x0','y0','z0','t0'); 
+            end;
+        end;        
+end;
+
+ 

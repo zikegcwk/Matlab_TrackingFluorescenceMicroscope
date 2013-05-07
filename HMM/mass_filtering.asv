@@ -1,0 +1,24 @@
+function mass_filtering(list)
+
+
+clear f; 
+
+for j=1:1:size(list,1)
+    list(j,1)
+    f{j}=filtering(list(j,1),list(j,2),list(j,3));
+end
+
+clear new_list;
+w=1;
+for j=1:1:size(list,1)
+    j
+    for k=1:1:size(f{j}.tss,2)
+        new_list(w,1)=list(j,1);
+        new_list(w,2)=f{j}.tss(k);
+        new_list(w,3)=f{j}.tee(k);
+        w=w+1;
+    end
+end
+
+
+save('filted_list.mat','f','list','new_list');

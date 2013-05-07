@@ -1,0 +1,72 @@
+function output = Select_StabFolded(filename,minlength,Keqmin)
+%Supposed to work after FlowFolding, on PostfoldedKinetics files
+MergedKin = [];
+%for i=start:stop
+getdatafrom = filename; %strcat(prefix,'(kinetics)',suffix,'cascade', num2str(i), '(4).dat');
+    try
+        tempdata = importdata(getdatafrom);
+        MergedKin = [MergedKin;tempdata];
+    catch
+        %barf = strcat('err_',getdatafrom)
+    end
+%end
+% length(MergedKin)
+% return
+StableKin = MergedKin(1,:);
+UnstableKin = MergedKin(1,:);
+
+MergedTemp = [];
+
+TimeLow = 0;
+TimeHigh = 0;
+countstable=0;
+countunstable=0;
+      for j=2:length(MergedKin)
+                        
+            if MergedKin(j,1)==0
+%                 
+                TimeLow = TimeLow + MergedKin(j,2);
+                MergedTemp = [MergedTemp;MergedKin(j,:)];
+
+            elseif MergedKin(j,1)==3
+                TimeHigh = TimeHigh + MergedKin(j,2);
+                MergedTemp = [MergedTemp;MergedKin(j,:)];
+            elseif MergedKin(j,1)==9&&MergedKin(j,2)==9
+                
+                MergedTemp = [MergedTemp;MergedKin(j,:)];
+                Keq = TimeHigh/TimeLow;
+                
+                if (TimeLow+TimeHigh)>(1000*minlength/MergedKin(1,2))
+                    if Keq>=Keqmin
+                        countstable = counstable+1;
+                        StableKin = [StableKin;MergedTemp];
+                        MergedTemp = [];
+                        TimeLow = 0;
+                        TimeHigh = 0;
+                    elseif Keq<Keqmin
+                        UnstableKin = [UnstableKin;MergedTemp];
+                        MergedTemp = [];
+                        TimeLow = 0;
+                        TimeHigh = 0;
+                    else
+                    end
+                else
+                    MergedTemp = [];
+                    TimeLow = 0;
+                    TimeHigh = 0;
+                end
+%                 
+            else
+            end
+        
+            
+      end
+      %count
+ %return
+parameters = strcat('(',num2str(minlength),'s)(',num2str(log10(Keqmin),2),')');
+newfilename1 = strcat('Stablekin',parameters,'.dat');%folding kinetcis
+newfilename2 = strcat('Unstablekin',parameters,'.dat');
+
+dlmwrite(newfilename1, StableKin,',');%Unfolded dwells-folding kinetics
+dlmwrite(newfilename2, UnstableKin,',');%Folded dwells - unfolding kinetics
+

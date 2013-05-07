@@ -1,0 +1,49 @@
+function [f,d]=StrobingLaser_duty_g2_fit(tau,g2)
+
+f2fit=@(parameters,tau) StrobingLaser_duty_gg2_inside(tau,parameters(1),parameters(2));
+
+%initial estimates for strobing frequency
+parameters_1_guess=177e3;
+%initial estimates for duty cycle;
+parameters_2_guess=0.5;
+
+
+[parameters_fit,r]=nlinfit(tau,g2,f2fit,[parameters_1_guess,parameters_2_guess]);
+
+
+
+figure;
+semilogx(tau,g2,'-or','MarkerSize',4,'MarkerFaceColor','r');
+hold on;
+semilogx(tau,StrobingLaser_duty_gg2_inside(tau,parameters_fit(1),parameters_fit(2)),'LineWidth',2);
+f=parameters_fit(1);
+d=parameters_fit(2);
+
+if nargout==0
+    clear f;
+    clear d;
+end
+
+function g2tau=StrobingLaser_duty_gg2_inside(tau,f,d)
+
+for j=1:1:(length(tau)-1)
+    %time scale for nomalization
+    to=tau(j+1)-tau(j);
+    
+    
+    %k is index for square and triangular waves
+    for k=1:1:500 %you perhaps will never need to go to 1000!
+        %if not normalized, this is the expression. 
+        %ff(k,1)=0.5*(2/k/pi/d)^2*(sin(k*pi*d))^2*cos(2*pi*f*k*tau(j));
+        ff(k,1)=(1/(2*to))*(2/k/pi/d)^2*(sin(k*pi*d))^2*(1/2/pi/k/f)*(sin(2*pi*f*k*(tau(j)+to))-sin(2*pi*f*k*tau(j)));
+        
+
+    end
+    
+    g2tau(j)=sum(ff,1);
+    
+    
+end
+
+%this is just to make sure tau and g2 have the same length. 
+g2tau(length(tau))=g2tau(length(tau)-1);

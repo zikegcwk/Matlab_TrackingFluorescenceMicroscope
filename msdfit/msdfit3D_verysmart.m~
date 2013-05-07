@@ -1,0 +1,64 @@
+function [D_fit, noiseDensity_fit, gammac_fit, gammap_fit, L, Dnoise,h] = msdfit3D_verysmart(dt, dx, dy, dz, eb, givenParams,initGuess,plotTag)
+
+%given params should be in order noiseDensity,gammac,gammap;
+%initGuess should be in order D, noiseDensity, gammac, gammap;
+%the sum of the number of parameter in givenParams and initGuess should be
+%4
+eb=eb/sum(eb);
+Dfit=-ones(3,1);
+noiseDensity_fit=Dfit;
+gammac_fit=Dfit;
+gammap_fit=Dfit;
+L=Dfit;
+Dnoise=Dfit;
+[D_fit(1), noiseDensity_fit(1), gammac_fit(1), gammap_fit(1), L(1), Dnoise(1)]=msdfit1D_smart(dt,dx,eb,givenParams(1,:),initGuess(1,:));
+[D_fit(2), noiseDensity_fit(2), gammac_fit(2), gammap_fit(2), L(2), Dnoise(2)]=msdfit1D_smart(dt,dx,eb,givenParams(2,:),initGuess(2,:));
+[D_fit(3), noiseDensity_fit(3), gammac_fit(3), gammap_fit(3), L(3), Dnoise(3)]=msdfit1D_smart(dt,dx,eb,givenParams(3,:),initGuess(3,:));
+
+
+if plotTag
+    h=figure();
+    semilogx(dt, dx, 'b'); hold on;
+    semilogx(dt, dx, 'b', dt, msdfun_smart(D_fit(1),noiseDensity_fit(1),gammac_fit(1),gammap_fit(1)), 'k');  hold on;
+    case 2
+        semilogx(dt, dx, 'b', dt, g_2_0(beta_x, dt), 'k');  hold on;
+end
+
+try
+    beta0=initGuess;
+    f2fit=@(beta,t) eb.*msdfun(cat(2,beta,givenParams),t);
+    beta_fit=nlinfit(dt, eb.*dx, f2fit, beta0);
+    
+    allParams=cat(2,beta_fit,givenParams);
+    D_fit=allParams(1);
+    noiseDensity_fit=allParams(2);
+    gammac_fit=allParams(3);
+    gammap_fit=allParams(4);
+    Dnoise=noiseDensity_fit^2*gammac_fit^2/2;
+    L=sqrt(D_fit*(1/gammac_fit+1/gammap_fit)+1/gammac_fit*Dnoise);
+catch EM1
+    try
+        f2fit=@(beta,t) eb.*msdfun_reduced(cat(2,beta,givenParams),t);
+        if length(initGuess)==4;
+            beta0=initGuess(1:3);
+        else
+            beta0=initGuess;
+        end
+        beta_fit=nlinfit(dt, eb.*dx, f2fit, beta0);
+        
+        allParams=cat(2,beta_fit,givenParams);
+        D_fit=allParams(1);
+        noiseDensity_fit=allParams(2);
+        gammac_fit=allParams(3);
+        gammap_fit=Inf;
+        Dnoise=noiseDensity_fit^2*gammac_fit^2/2;
+        L=sqrt(D_fit*(1/gammac_fit)+1/gammac_fit*Dnoise);
+    catch EM2
+        D_fit = -1;
+        noiseDensity_fit = D_fit;
+        gammac_fit=-1;
+        gammap_fit=-1;
+        L=-1;
+        Dnoise=-1;
+    end
+end

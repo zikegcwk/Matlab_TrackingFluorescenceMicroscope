@@ -1,0 +1,116 @@
+function output = updatae_select_molecules(handles)
+
+
+
+
+%sorted_data = handles.proc_data;
+select_mol = get(handles.uitable2,'Data');
+select_spec = get(handles.uitable3,'Data');
+
+
+
+% Only Sort For Selected Molecules
+
+
+%temp = cellfun(@(x) x(x==true), select_spec(:,1));
+
+
+
+select_spec = [cell2mat(select_spec(:,1)) cellfun(@str2num,select_spec(:,2:3))];
+
+%select_spec = str2num(select_spec(temp,2:3)) ;
+%select_spec = [str2mat(select_spec(temp,2)) str2mat(select_spec(temp,2))];
+
+
+excluded = [];
+for i = 1:size(select_spec,1)
+    
+    if select_spec(i,1)
+    
+    temp = find(select_spec(i,2) > handles.sort_matrix(:,i) | select_spec(i,3) < handles.sort_matrix(:,i) );
+    excluded = [excluded; temp];
+     
+    end
+    
+    
+end
+
+
+
+
+
+select_names = [];
+
+for i=1:10
+
+    if select_mol(i,1):select_mol(i,2) ~=0
+    
+temp_select_names = generate_file_name(select_mol(i,1):select_mol(i,2),[select_mol(i,3) select_mol(i,4)],'.mtrace');
+
+select_names = cat(1,select_names,temp_select_names);
+
+    end
+end
+
+
+auto_selected = [];
+for i=1:size(select_names,1)
+
+temp = find(handles.sort_matrix(:,1) == select_names{i,2} & handles.sort_matrix(:,2) == select_names{i,3});
+auto_selected = [auto_selected; temp];
+
+
+end
+
+
+%final_selected = logical(zeros(size(handles.proc_data(:,1))));
+
+selected = false(size(handles.selected));
+
+if ~isempty(auto_selected)
+
+selected(auto_selected) = logical(1);
+
+end
+
+if ~isempty(excluded)
+    
+selected(excluded) = logical(0);
+
+end
+
+
+
+
+
+selected_data = handles.proc_data(selected,:);
+
+selected = mat2cell(selected,ones(1,size(selected,1)), 1);
+
+% 
+% cellfun(@(x) x(x==false), temp, 'UniformOutput', false)
+% 
+% 
+% final_selected = mat2cell(final_selected,ones(size(final_selected,1),1),1);
+% 
+% 
+% 
+% temp = get(handles.uitable1,'Data');
+% temp = cat(2,final_selected,temp(:,2:end));
+% set(handles.uitable1,'ColumnName',{ 'Selected' column_names{:}})
+% set(handles.uitable1,'Data',temp);
+
+
+
+output = {selected_data selected };
+
+
+
+%mat2cell(ones(10,1),ones(10,1),1)
+
+
+
+
+
+           
+

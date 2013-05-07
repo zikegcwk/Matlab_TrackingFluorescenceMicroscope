@@ -1,0 +1,18 @@
+function plotIntensity(dataID,dt,tmin,tmax)
+fname=sprintf('data_%g',dataID);
+u=load(fname);
+utags=u.tags;
+t=utags{1};
+I=atime2bin(t,dt,tmin,tmax);
+I=10^-3/dt*I(1:end-1);
+ts=dt*ones(length(I),1);
+ts=tmin+cumsum(ts);
+figure, plot(ts,I);
+xlabel('t [s]');
+ylabel('I [kHz]');
+s=pwd;
+x=strfind(s,'data');
+title(strrep(strcat(s(x+5:end),'/',fname),'_','\_'));
+
+
+

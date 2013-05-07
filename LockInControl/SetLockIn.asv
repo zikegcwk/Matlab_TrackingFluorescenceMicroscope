@@ -1,0 +1,15 @@
+function HumanStructOut = SetLockIn(HumanStructIn)
+
+fprintf('X offset: %g\nY offset: %g\nZ offset: %g\n', HumanStructIn.OffsetX, HumanStructIn.OffsetY, HumanStructIn.OffsetZ
+
+SRSStruct = Human2SRS(HumanStructIn); % Does checks and conversions to valid parameters
+HumanStructOut = SRS2Human(SRSStruct); % Return this so that any parameter modifications are known
+
+[axy, az] = SRSStruct2Vec(SRSStruct);
+
+srsset_mex('overload.stanford.edu', 12000, axy);
+srsset_mex('overload.stanford.edu', 12001, az);
+
+UpdateLockInGUI(axy, az);
+
+return;

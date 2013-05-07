@@ -1,0 +1,35 @@
+function r=ts_rates(varargin)
+
+amp=varargin{1};
+c1=amp;
+
+Qh=varargin{2};
+c2=Qh;
+
+avgQ=varargin{3};
+c3=avgQ;
+
+if nargin==4
+    k=varargin{4};
+end
+    
+
+as=solve('ph+pl-1','(ph/pl)*(1-Qh*pl/(c3-ph*c2))^2-c1*(1+ph*c2/(c3-ph*c2))^2');
+ph=as.ph;
+pl=as.pl;
+r.ph=(c1*c3^2)/(c1*c3^2 - 2*c2*c3 + c2^2 + c3^2);
+r.pl=(c2^2 - 2*c2*c3 + c3^2)/(c1*c3^2 - 2*c2*c3 + c2^2 + c3^2);
+
+r.amp=amp;
+r.avgQ=avgQ;
+r.Qh=Qh;r.Ql=(c3-r.ph*Qh)/r.pl;
+
+r.K=r.ph/r.pl;
+r.Q=r.Qh/r.Ql;
+r.klh=r.K*k/(r.K+1);
+r.khl=k/(r.K+1);
+
+
+
+
+

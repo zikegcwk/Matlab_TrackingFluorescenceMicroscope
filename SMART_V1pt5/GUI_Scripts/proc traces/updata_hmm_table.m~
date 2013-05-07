@@ -1,0 +1,49 @@
+function output = updata_hmm_table(handles)
+
+% the nState listed in the table to that of the handles to see if things
+% have changed.
+table_data = get(handles.uitable1,'Data');
+
+if table_data{12,1} ~= handles.HMMsize;
+
+    if table_data{12,1}>10
+        
+        
+
+handles.HMMsize = table_data{12,1};
+
+% update the disc states
+% table_data(20,:) = [ {0} {0} {0} {0}];
+table_data(13,:) = cell(1,10);
+    for i=1:handles.HMMsize    
+      table_data{13,i} = i;     
+    end
+    
+    
+    tmatrix = cell(10,10);
+for i=1:handles.HMMsize
+    for j=1:handles.HMMsize
+        if i ~=j
+           
+        tmatrix{i,j}=1;    
+            
+        end
+    end
+end
+table_data(15:24,:) = tmatrix;
+    
+    
+    
+    
+    
+
+end
+
+
+% reset the transtion matrix
+
+
+
+set(handles.uitable1,'Data',table_data)
+handles.table_spec.user_table1 = table_data;
+output = handles;

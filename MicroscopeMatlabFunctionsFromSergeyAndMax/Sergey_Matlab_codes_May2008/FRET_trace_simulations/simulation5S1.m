@@ -1,0 +1,172 @@
+function simulation5S1(thigh, tlow, frame, bin)
+%simulates time trace of FRET from a two-state system
+%Usage: simulation5(thigh, tlow, frame, bin)
+%start with thigh=10, tlow=6, frame=5000, bin=4
+%thigh : lifetime in the classical state (frames)
+%tlow : lifetime in the hybrid state (frames)
+%frame : Number of frames to simulate
+%bin is used for sliding average
+%Harold-> Modified by Sergey
+
+fret_bin=-0.8:0.025:1.4;
+bgd_noise=22; %default = 20
+bga_noise=22; %default = 22
+% These numbers are determined from the background fluctuation
+
+low_a_noise=50;
+low_d_noise=50;
+high_a_noise=50;
+high_d_noise=50;
+%HAROLD: according to measurement in Jan.
+%signal noise(besides background noise) from Cy3-DNA was 1.4 times higher than the shot
+%noise. So use 1.4^1.4 for these numbers. Considering dyes in the ribosome
+%are much noisier, this is the lower limit.
+Imax=300;
+% this number is important as well. 
+FREThigh=0.85;
+FRETlow=0.15;
+ 
+Iac=Imax*FREThigh;
+Idc=Imax-Iac;
+
+Iah=Imax*FRETlow;
+Idh=Imax-Iah;
+n1=frame/2;%Sergey - this seems to limit maximum number of steps, so lets just make it proportional to # frames simulated
+tc=round(exprnd(thigh,n1,1));
+th=round(exprnd(tlow,n1,1));
+
+% Ia=zeros(1,frame);
+% Id=zeros(1,frame);
+m=1;
+for i=1:n1,    
+    % in the classical state
+    
+    Ia(m:m+tc(i)-1)=normrnd(Iac,sqrt(high_a_noise*Iac+bga_noise^2),1,tc(i));%Sergey - why high_a_noise*Iac?? Is it noise/signal?
+    Id(m:m+tc(i)-1)=normrnd(Idc,sqrt(high_d_noise*Idc+bgd_noise^2),1,tc(i));
+    m=m+tc(i);
+    Ia(m:m+th(i)-1)=normrnd(Iah,sqrt(low_a_noise*Iah+bga_noise^2),1,th(i));
+    Id(m:m+th(i)-1)=normrnd(Idh,sqrt(low_d_noise*Idh+bgd_noise^2),1,th(i));
+    m=m+th(i);
+    if m > frame
+        break;
+    end
+end
+%our exposure time is 10 times higher than the sampling time.
+column=floor((m-1));
+% Ia_ob=reshape(Ia(1:column*10), 10, column);
+% Ia_ob=mean(Ia_ob,1);
+% Id_ob=reshape(Id(1:column*10), 10, column);
+% Id_ob=mean(Id_ob,1);
+% 
+Ia_bin=0;
+Id_bin=0;
+for i=1:bin,
+    Ia_bin=Ia_bin+Ia(i:column-bin+i);
+    Id_bin=Id_bin+Id(i:column-bin+i);
+end
+Ia_ob=Ia_bin./bin;
+Id_ob=Id_bin./bin;
+
+
+fret=Ia_ob./(Ia_ob+Id_ob);
+axis1=subplot('position',[0.0500    0.7012    0.5    0.2238]);
+set(gcf,'position',[100  200   860   500])
+plot(1:length(Ia_ob),Ia_ob,'r-',1:length(Id_ob),Id_ob,'g-');
+set(axis1, 'ylim', [-50 Imax*1.5]);
+grid on;%SERGEY case sensitive corr
+zoom on;
+axis2=subplot('position',[0.0500    0.4056    0.5    0.2238]);
+plot(1:length(fret),fret,'m-');
+set(axis2, 'ylim', [-0.2 1.2]);
+grid on;
+zoom on;
+
+axis3=subplot('position',[0.0500    0.1100    0.5    0.2238]);
+[hist_data I]=hist(fret,fret_bin);
+[fresult,gof,output] = fit(fret_bin',hist_data','gauss2','StartPoint',[100 FRETlow 0.2 100 FREThigh 0.2]);
+histogram=[I' hist_data'];
+newfilename = strcat('sim5S1(',num2str(thigh),',',num2str(tlow),')',num2str(frame),'.dat');
+save(newfilename,'histogram','-ascii');
+
+bar(I, hist_data,'w');
+shading flat;
+
+peak=inline('a*exp(-((x-b)./c).^2)','a','b','c','x');
+x=-0.2:0.01:1.2;
+peak1=peak(fresult.a1, fresult.b1, fresult.c1, x);
+peak2=peak(fresult.a2, fresult.b2, fresult.c2, x);
+
+line(x, fresult(x),'color','r');
+line(x, peak1,'color','b');
+line(x, peak2,'color','g');
+
+xlim=get(axis3,'xlim');
+ylim=get(axis3,'ylim');
+scan_start=min(find(x>=FRETlow));
+scan_end=min(find(x>=FREThigh));
+
+for i=scan_start:scan_end,    
+    if (peak1(i)-peak2(i))*(peak1(i+1)-peak2(i+1))<0
+        break;
+    end
+end
+threshold = mean([x(i) x(i+1)]);
+line(threshold,ylim(1):100:ylim(2),'color','k');
+subplot(axis2);
+cut=threshold*ones(1,length(fret));
+line(1:length(fret),cut,'color','b');
+
+index_high=find(fret>=threshold);
+index_low=find(fret<threshold);
+
+x=diff(index_high);
+low_time = x(find(x~=1))-1;
+subplot('position',[0.650    0.1100    0.3    0.4]);
+data_low=hist(low_time,1:10*thigh);
+%%%SERGEY
+lowtimedist = low_time';
+save(strcat('Fkin',newfilename),'lowtimedist','-ascii');
+bar(1:5*thigh,data_low(1:5*thigh),'w')
+curve_low = fit((1:10*thigh)',data_low','exp1','Startpoint',[data_low(1) -1/tlow]);
+line(1:5*thigh, curve_low(1:5*thigh),'color','r');
+A={['hybrid state(low FRET)'];
+    ['amplitude = ' num2str(curve_low.a)];
+    ['decay time = ' num2str(-1/curve_low.b)]};
+text(2.5*tlow, data_low(1)/2, A);
+zoom on;
+
+x=diff(index_low);
+high_time = x(find(x~=1))-1;
+subplot('position',[0.650    0.5500    0.3    0.4]);
+data_high=hist(high_time,1:10*thigh);
+%%%SERGEY
+hightimedist = high_time';
+save(strcat('Ukin',newfilename),'hightimedist','-ascii');
+bar(1:5*thigh,data_high(1:5*thigh),'w');
+curve_high = fit((1:10*thigh)',data_high','exp1','Startpoint',[data_high(1) -1/thigh]);
+line(1:5*thigh, curve_high(1:5*thigh),'color','r');
+A={['classical state(high FRET)'];
+    ['amplitude = ' num2str(curve_high.a)];
+    ['decay time = ' num2str(-1/curve_high.b)]};
+text(2.5*tlow, data_high(1)/2, A);
+zoom on;
+
+area1 = 100*fresult.a1*fresult.c1/(fresult.a1*fresult.c1+fresult.a2*fresult.c2);
+area2 = 100 - area1;
+center1 = fresult.b1;
+center2 = fresult.b2;
+width1 = fresult.c1 * sqrt(2);
+width2 = fresult.c2 * sqrt(2);
+% use cell array of strings
+A={['area1(%) = ' num2str(area1)];
+    ['center1 = ' num2str(center1)];
+    ['width1 = ' num2str(width1)];
+    ['area2(%) = ' num2str(area2)];
+    ['center2 = ' num2str(center2)];
+    ['width2 = ' num2str(width2)]};
+subplot(axis3);
+text(-0.5, mean(ylim), A);
+zoom on;
+
+disp(fresult);
+disp(gof);

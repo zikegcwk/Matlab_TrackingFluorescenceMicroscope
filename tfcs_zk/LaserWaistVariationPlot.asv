@@ -1,0 +1,14 @@
+tau=logspace(-6,-1,600);
+
+D=[5 5 5];
+bandwidth=[10*2*pi 200*2*pi;10*2*pi 200*2*pi;5*2*pi 300*2*pi];
+noise=[0.005;0.005;0.05];
+%laserwaist=[0.65;0.65;3];
+
+omega_xy=[0.2;0.4;0.65;1;2];
+omega_z=pi*omega_xy.^2/0.444;
+
+for j=1:1:4
+    laserwaist=[omega_xy(j);omega_xy(j);omega_z(j)];
+    T_GG2(:,j)=Track_GG2(tau,D,bandwidth,noise,laserwaist,'second_order',0,0);
+end

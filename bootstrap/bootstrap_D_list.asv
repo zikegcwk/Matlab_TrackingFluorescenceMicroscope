@@ -1,0 +1,9 @@
+%function boostrap_D_list takes a list and compute diffusion coefficient
+%based on bootstrap method. 
+function [D,stdD]=bootstrap_D_list(list,dt)
+
+D=zeros(length(list));
+stdD=zeros(length(list));
+
+for j=1:1:length(list)
+    [D()]

@@ -1,0 +1,24 @@
+%NHIST  Normalized histogram
+%   [A, X] = NHIST( data, num_bins ) returns the histogram
+%   corresponding to the MATLAB function call
+%   [a, x] = HIST(data, num_bins )
+%   where a has been normalized into a 
+function [a, x] = nhist( data, num_bins );
+
+if nargin == 0,
+    error( 'Come on, at least give me some data.' );
+end;
+
+if nargin == 1,
+    num_bins = 1;
+end;
+
+if numel( num_bins ) ~= 1,
+    error( 'NHIST does not support vector bin centers (yet?).' );
+end;
+
+[a, x] = hist( data, num_bins );
+
+a = a / (sum(a) * (x(2) - x(1)));
+
+return;

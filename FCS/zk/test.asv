@@ -1,0 +1,30 @@
+%tau=logspace(-5,-1,200);
+%g2=corr_Laurence(tags{3},tags{3},tau);%links to corr_Laurence
+%g2=g2(1:end-1)-1;
+%tau=tau(1:end-1);
+
+%figure;
+%semilogx(tau,g2);
+
+tau=logspace(-5,-1,60);
+[g,g_std]=FCS_compute(tags{3},tags{3},tau);%links to FCS_core3.c
+figure;
+semilogx()
+
+% g2N=g2N(1:end-1);
+% g2N_std=g2N_std(1:end-1);
+
+% tau=tau(1:end-1);
+% 
+% figure(7);clf;
+% subplot(1,3,1)
+% %title('autocorrelation')
+% semilogx(tau,g2N-1,'r');
+% subplot(1,3,2);
+% %title('standard deviation')
+% semilogx(tau, g2N_std);
+% 
+% subplot(1,3,3);
+% errorbar(tau,g2N-1,g2N_std);
+% %titile('error bar plot')
+% set(gca,'Xscale','log')

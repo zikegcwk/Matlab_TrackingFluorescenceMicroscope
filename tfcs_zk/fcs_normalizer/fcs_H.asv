@@ -1,0 +1,46 @@
+%g2_H=fcs_H(g2)
+%g2_H=fcs_H(tau,g2)
+%g2_H=fcs_H(tau,g2,amp0)
+
+function g2_H=fcs_H(varargin)
+
+if nargin==1
+    g2=varargin{1};
+    tau=logspace(-(size(g2{1,1},2)+1)/10,0,(size(g2{1,1},2)+1));
+    tau=tau(1:end-1);
+    amp0=1;
+elseif nargin==2
+    tau=varargin{1};
+    g2=varargin{2};
+    amp0=1;
+elseif nargin==3
+    tau=varargin{1};
+    g2=varargin{2};
+    amp0=varargin{3};
+    
+end
+
+if tau(1)<10^-6
+    [tauc,g2c]=fcs_cut(tau,g2,1e-6);
+else
+    error('tau is very short. you perhaps should check to make sure the first 15 points is flat. see code.')
+end
+
+for j=1:1:size(g2c,1)
+    for k=1:1:3
+        N(j,k)=1/mean(g2c{j,k})
+    end
+end
+
+for j=1:1:size(g2,1)
+    for k=1:1:3
+        g2_N{j,k}=g2{j,k}*N(j,k);
+        g2_N{j,k+3}=g2{j,k+3}*N(j,k);
+    end
+end
+
+if size(g2,2)>6
+    for j=1:1:size(g2,1)
+        g2_N{j,7}=g2{j,7};
+    end
+end

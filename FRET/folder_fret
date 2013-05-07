@@ -1,0 +1,30 @@
+function FRET_efficency
+
+cd(directory)
+
+for j=1:1:100
+    Combine_APDs(j,j+100);
+end
+
+for j=1:1:100
+    [D{j},A{j},E{j}]=FRET_calculator_boss(j+100,2.5e-4,6);
+    
+    fret_e(j)=mean(E{j});
+    std_fret_e(j)=std(E{j});
+    
+    D_pk(j)=mean(D{j});
+    std_D_pk=std(D{j});
+    
+    A_pk(j)=mean(A{j});
+    std_A_pk=std(A{j});
+    
+end
+
+efficiency=mean(fret_e);
+std_efficiency=(sum(std_fret_e.^2)/length(std_fret_e)^2)^0.5;
+
+Acceptor_pk=mean(A_pk);
+std_Acceptor_pk=(sum(std_A_pk.^2)/length(std_A_pk)^2)^0.5;
+
+Donor_pk=mean(D_pk);
+std_Donor_pk=(sum(std_D_pk.^2)/length(std_D_pk)^2)^0.5;

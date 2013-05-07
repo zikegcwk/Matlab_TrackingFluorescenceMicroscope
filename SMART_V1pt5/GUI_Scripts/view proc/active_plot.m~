@@ -1,0 +1,131 @@
+function active_plot(handles)
+
+
+val(1) = get(handles.popupmenu2,'Value');
+val(2) = get(handles.popupmenu3,'Value');
+data_val = val-1;
+
+
+
+cla(handles.axes1)
+
+if val(1) ~= 1 && val(2) ==1
+% Plot A Histogram of the Data
+    
+    
+
+hist(handles.axes1,[handles.to_plot{:,data_val(1)}]');
+temp = get(handles.popupmenu3,'String');
+xlabel(handles.axes1,temp(data_val(1)))
+ylabel(handles.axes1,'Number of Molecules')
+ 
+    
+elseif val(1) ==1 && val(2) ~=1
+% Plot a ranked stem plot of the data
+
+%cla(handles.axes1)
+
+
+cla(handles.axes1)
+axes(handles.axes1)
+
+if get(handles.checkbox1,'Value')
+
+active_plot_ci(handles)
+       
+end
+
+
+ydata = handles.to_plot(:,data_val(2));
+ydata = cat(2,ydata,mat2cell([1:size(ydata,1)]',ones(size(ydata,1),1),[1]));
+[A B] = sortrows(cell2mat(ydata(:,1)));
+to_plot = ydata(B,:);
+
+
+%temp = NaN( size(handles.to_plot(:,data_val(2),1)));
+%to_plot = sort();
+
+%to_plot = [to_plot temp];
+
+%temp = find(to_plot(:,1) == handles.to_plot(handles.index,val(2)));
+%to_plot(temp,2) = handles.to_plot(handles.index,val(2));
+
+stem(handles.axes1,cell2mat(to_plot(:,1)),'Color','k','LineStyle','none','MarkerSize',6);
+hold(handles.axes1, 'on');
+
+
+
+red_to_plot = NaN(size(to_plot,1),1);
+
+temp = find(cell2mat(to_plot(:,2))==handles.index);
+
+red_to_plot(temp) = handles.to_plot{handles.index,data_val(2)};
+
+stem(handles.axes1,red_to_plot,'Color','r','LineStyle','none','MarkerSize',6,'MarkerEdgeColor', 'r',...
+    'MarkerFaceColor', 'r');
+
+xlabel(handles.axes1,'Molecule in Ranks Order')
+temp = get(handles.popupmenu3,'String');
+ylabel(handles.axes1,temp(val(2)))
+
+
+
+
+
+else
+% plot a scatter plot of the two variables
+
+cla(handles.axes1)
+axes(handles.axes1)
+
+if get(handles.checkbox1,'Value')
+
+active_plot_ci(handles)
+       
+end
+
+
+%scatter(handles.axes1,handles.to_plot(:,val(1)),handles.to_plot(:,val(2)),'MarkerEdgeColor', 'k',...
+%    'MarkerFaceColor', 'k')
+%hold(handles.axes1, 'on');
+
+if sum(data_val) ~=0
+
+
+%hold on
+scatter(handles.axes1,[handles.to_plot{:,data_val(1)}]',[handles.to_plot{:,data_val(2)}]','MarkerEdgeColor', 'k',...
+    'MarkerFaceColor', 'k')
+
+%tempy = get(gca, 'ylim');
+%tempx = get(gca, 'xlim');
+%hold
+hold(handles.axes1, 'on');
+
+%scatter(handles.axes1,handles.to_plot(handles.index,val(1)),handles.to_plot(handles.index,val(2)),'MarkerEdgeColor', 'r',...
+%    'MarkerFaceColor', 'r');
+%ylim(tempy)
+%xlim(tempx)
+
+
+
+scatter(handles.axes1,[handles.to_plot{handles.index,data_val(1)}]',[handles.to_plot{handles.index,data_val(2)}]','MarkerEdgeColor', 'r',...
+    'MarkerFaceColor', 'r');
+
+temp = get(handles.popupmenu2,'String');
+xlabel(handles.axes1,temp(val(1)))
+temp = get(handles.popupmenu3,'String');
+ylabel(handles.axes1,temp(val(2)))
+
+
+
+
+    
+    
+end
+
+
+set(handles.axes1,'Box','on','FontSize', 15, 'FontWeight','Normal')
+
+
+
+

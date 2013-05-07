@@ -1,0 +1,30 @@
+% APDGate(arg1, arg2)
+% toggles gate arg1 to state arg2.
+function APDGate(arg1, arg2); 
+
+global IntState;
+dio = digitalio('nidaq', 'Dev1');
+if(nargin == 2),
+    APDNum = arg1;
+    newState = arg2;
+    
+    hline = addline(dio, APDNum - 1, 'Out');
+    hline = addline(dio, 4, 'Out');
+
+    output = logical([newState IntState]);
+    putvalue(dio, output);
+
+    
+
+else
+    LineState = arg1;
+    hline = addline(dio, 0:3, 'Out');
+    hline = addline(dio, 4, 'Out');
+    
+    output = logical([LineState IntState]);
+    putvalue(dio, output);
+end;
+
+delete(dio);
+
+return;

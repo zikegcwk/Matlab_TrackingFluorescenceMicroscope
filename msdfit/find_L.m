@@ -1,0 +1,1 @@
+% function L = find_L(D_fit, n_fit, gammavec_fit);function L = find_L(D_fit, n_fit, gammavec_fit);%D_fit = reshape(D_fit, 3, 1);%n_fit = reshape(n_fit, 3, 1);%gammavec_fit = reshape(gammavec_fit, 3, numel(gammavec_fit)/3);L = sqrt(D_fit .* sum(1./gammavec_fit, 2) + n_fit.^2.*gammavec_fit(:, 1)/2);return;

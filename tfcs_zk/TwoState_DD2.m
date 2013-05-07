@@ -1,0 +1,14 @@
+%function TwoState_DD2 gives the theoretical autocorrelation for a two
+%state model. Actually, the one without minus one. 
+
+function GG2=TwoState_DD2(tau,k12,k21,Q)
+
+k=k12+k21;
+
+pi1=k21/k;
+pi2=k12/k;
+
+KK=pi2/pi1;
+%Q is Q2/Q1, or Q_high/Q_low. 
+
+GG2=(KK*(1-Q)^2/(1+KK*Q)^2).*exp(-k*tau)+1;

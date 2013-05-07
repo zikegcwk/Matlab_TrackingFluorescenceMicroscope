@@ -1,0 +1,171 @@
+%function qd_fcs calculate FCS curves for file_N files and average them.
+%The taumin and taumax are to specify the limite of tau. N is the number of
+%points calculated in tau. 
+
+%color = all plot all autocorrelation curves and also corss correlation
+%color = r red channel autocorrelation only
+%color = g green channel autocorrelation only
+%color = x cross correlation only.
+
+
+%plot_type = 1: one for 655, one for 588. 
+%plot_type = 2: one for 655, two for 588.
+%plot_type = 3: two for 655, one for 585.
+%plot_type = 4: two for 655, two for 588.
+function [r0,g0,x0]=qd_fcs_single_plot(s_N,e_N,qd_format,taumin,taumax,N),
+
+if nargin==1
+    e_N=s_N;
+    taumin=-5;
+    taumax=-1;
+    N=200;
+    qd_format='average';
+end
+
+if nargin==3
+    taumin=-5;
+    taumax=-1;
+    N=200;
+end
+
+
+r0=ones(1,e_N-s_N+1);
+
+g0=ones(1,e_N-s_N+1);
+
+x0=ones(1,e_N-s_N+1);
+
+
+%see if there are multiple tags within a data file.    
+load(sprintf('data_%g.mat',s_N));
+tagsSize=size(tags);
+plot_flag=tagsSize(1,2);
+clear tags;
+
+
+
+if plot_flag==1
+    g=zeros(s_N,N-1);
+    for j=s_N:1:e_N
+        [tau,g(j,:)]=lfcs(j,taumin,taumax,N);
+    end
+    ave_g=mean(g,1);
+
+    scrsz = get(0,'ScreenSize');
+
+    figure('Name',cd)
+    xlabel('correlation time scale (S)','FontSize',14);
+    ylabel('correlation value','FontSize',14);
+    title(cd);
+    semilogx(tau,ave_g,'r');
+end
+
+
+
+ if plot_flag==2
+    if strcmp(qd_format,'average')
+        gR=zeros(e_N-s_N+1,N-1);
+        gG=zeros(e_N-s_N+1,N-1);
+        gX=zeros(e_N-s_N+1,N-1);
+    
+        for j=s_N:1:e_N
+            [tau,gR(j,:),gG(j,:),gX(j,:)]=lfcs(j,taumin,taumax,N);
+        end
+
+        ave_gR=mean(gR,1);
+        ave_gG=mean(gG,1);
+        ave_gX=mean(gX,1);
+        
+        scrsz = get(0,'ScreenSize');
+
+        figure('Name',cd,'Position',[1 scrsz(4)/2-100 scrsz(3) scrsz(4)/2-100])
+    
+        subplot(1,3,1);
+        xlabel('correlation time scale (S)','FontSize',14,'Color','b');
+        ylabel('correlation value','FontSize',14);
+        title(cd);
+        semilogx(tau,ave_gR,'r');
+
+        subplot(1,3,2)
+        xlabel('correlation time scale (S)','FontSize',14);
+        ylabel('correlation value','FontSize',14);
+        title(cd);
+        semilogx(tau,ave_gG,'g');
+    
+        subplot(1,3,3)   
+        xlabel('correlation time scale (S)','FontSize',14);
+        ylabel('correlation value','FontSize',14);
+        title(cd);
+        semilogx(tau,ave_gX,'b');
+ 
+    end
+    
+    if strcmp(qd_format,'individual')
+        gR=zeros(e_N-s_N+1,N-1);
+        gG=zeros(e_N-s_N+1,N-1);
+        gX=zeros(e_N-s_N+1,N-1);
+    
+        
+        for j=s_N:1:e_N
+            %calculating the correlation values.
+            [tau,gR(j,:),gG(j,:),gX(j,:)]=lfcs(j,taumin,taumax,N);
+            
+            %give the average correlation values from 10^-5 to 10^-4
+            for k=1:1:45
+                temp_gR(k)=gR(j,k);
+                temp_gG(k)=gG(j,k);
+                temp_gX(k)=gX(j,k);
+            end    
+        
+            r0(j)=mean(temp_gR);
+            g0(j)=mean(temp_gG);
+            x0(j)=mean(temp_gX);
+            
+            
+        end
+
+
+       
+        
+       
+        
+        
+
+
+
+        scrsz = get(0,'ScreenSize');
+
+  
+        figure(2009)
+        set(gca,'XScale','log','YScale','linear')
+        hold on;
+        xlabel('correlation time scale (S)','FontSize',14);
+        ylabel('Autocorrelation value','FontSize',14);
+        title(cd);
+        
+        for j=s_N:1:e_N
+            semilogx(tau,gR(j,:),'r');
+            hold on;
+            semilogx(tau,gG(j,:),'g');
+            hold on;
+            
+        end
+        hold off;
+        
+        
+       figure(2010)
+       set(gca,'XScale','log','YScale','linear')
+        hold on;
+        xlabel('correlation time scale (S)','FontSize',14);
+        ylabel('Cross-correlation value','FontSize',14);
+        title(cd);
+        for j=s_N:1:e_N
+            semilogx(tau,gX(j,:),'b');
+            hold on;
+        end
+        hold off;
+     end
+
+
+ 
+end 

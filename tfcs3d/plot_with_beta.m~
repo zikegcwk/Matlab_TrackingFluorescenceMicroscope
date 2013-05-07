@@ -1,0 +1,18 @@
+function g = plot_with_beta(tau, beta, fit_info);
+
+if length(find(isnan(fit_info)) ~= length(beta)),
+    error('beta and fit_info not compatible.');
+end;
+
+fit_info(1) = beta(1);
+fit_info(2) = beta(2);
+
+v = 3;
+for u = 3:length(fit_info),
+    if isnan(fit_info(u)),
+        fit_info(u) = beta(v);
+        v = v + 1;
+    end;
+end;
+
+g = tfcs3d(tau, fit_info(1), fit_info(2), fit

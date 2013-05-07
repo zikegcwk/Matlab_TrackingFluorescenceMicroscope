@@ -1,0 +1,26 @@
+% sigsq = gausspoly_variance(L, wxy, wz, sigxy, sigz, gamxy, gamz, y)
+
+function gof0 = gausspoly_variance(L, b, y_over_L, wxy, wz, sigxy, sigz)
+
+N = length(y);
+
+gnorm = 0;
+
+al_sq = L*b/3 * ((y_over_L - 0.5).*(y_over_L - 0.5) + 1.0/12.0);
+
+[almesh, ammesh] = meshgrid(al_sq, al_sq);
+
+[Mslxy, Msmxy] = meshgrid(al_sq + wxy^2/4 + sigxy^2, al_sq + wxy^2/4 + sigxy^2);
+[Mslz, Msmz] = meshgrid(al_sq + wz^2/4 + sigz^2, al_sq + wz^2/4 + sigz^2);
+
+staticMxy = Ml .* Mm;
+staticMz = Mlz .* Mlz;
+
+dynamicMxy = (sigxy^2 + L*b/9 ...
+    - b/3*(abs(almesh + ammesh) + abs(almesh-ammesh))...
+    + b/6*(almesh.^2 + ammesh.^2)).^2;
+dynamicz = (sigz^2 + L*b/9 ...
+    - b/3*(abs(almesh + ammesh) + abs(almesh-ammesh))...
+    + b/6*(almesh.^2 + ammesh.^2)).^2;
+
+g  

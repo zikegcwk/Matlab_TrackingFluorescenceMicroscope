@@ -1,0 +1,49 @@
+function fcsselect_getter(root,taumin,taumax,tauN)
+
+if nargin==0
+    root=cd;
+    taumin=-5;
+    taumax=0;
+    tauN=100;
+end
+
+w=dir;
+wname=struct2cell(w);
+
+for j=3:1:size(wname,2)
+    subdir{1,j-2}=wname{1,j};
+end
+
+for j=1:1:length(subdir)
+    dir_FCS{1,j}=strcat(root,'\',subdir{1,j});
+end
+
+k=1;
+for j=1:1:length(subdir)
+    cd(dir_FCS{1,j});
+    if exist(strcat(subdir{1,j},'_siglist.mat'))==2
+        display('Working on:')
+        display(subdir{1,j});
+        data_there(j)=1;
+        real_dir_FCS{1,k}=dir_FCS{1,j};
+        k=k+1;
+    else
+        display('Working on:')
+        display(subdir{1,j});
+                data_there(j)=0;
+    end
+end
+
+
+for j=1:1:size(data_there,1)
+    if 
+    cd(dir_FCS{1,j})
+    
+    [tau,g2{j,1},g2{j,2},g2{j,3},g2{j,4},g2{j,5},g2{j,6},g2{j,8},g2{j,9}]=FCS_ZK_select(0,-1,0,-1,taumin,taumax,tauN);
+    save(strcat(subdir{1,j},'.mat'),'tau','g2','dir_FCS');
+    g2{j,7}=subdir{1,j};
+    cd(root);
+    save(strcat(date,'.mat'),'tau','g2','dir_FCS')
+    
+end
+

@@ -1,0 +1,24 @@
+function [gx,tau,g1,g2] = all_traces_fcs(taumin,taumax,Ntau,compute_auto),
+
+if nargin == 3,
+    compute_auto = 0;
+end;
+
+if nargin < 3,
+    error('At least three arguments required.');
+end;
+
+data_traces;
+Ntraces = size(traces, 1);
+gx = zeros(Ntraces, Ntau-1);
+
+if compute_auto,
+    g1 = gx;
+    g2 = gx;
+end;
+
+for u = 1:Ntraces,
+    if compute_auto,
+        [tau,g
+    else
+    end;

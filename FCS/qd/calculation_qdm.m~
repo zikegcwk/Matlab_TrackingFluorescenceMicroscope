@@ -1,0 +1,9 @@
+cd /mnt/firewire/data/2008/100308/CR8
+qd_fcs(15);
+
+qd_fcs(15);
+cd w:\data\2008\100308\CR20
+qd_fcs(15);
+%cd w:\data\2008\100308\CR80
+%qd_fcs(15);
+

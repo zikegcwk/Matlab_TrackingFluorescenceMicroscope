@@ -1,0 +1,73 @@
+function atraces=analyzeTraces(traces,reanalyze)
+thres=0.3;
+warning off stats:nlinfit:IterationLimitExceeded
+[n,p]=size(traces);
+atraces=traces;
+if p==3
+    atraces=cat(2,traces,zeros(n,2));
+end
+goon=true;
+i=1;
+n2a=n;
+if reanalyze
+    display(sprintf('Reanalyzing all traces: %g traces to analyze',n));
+else
+n2a=length(find(atraces(:,5)==0));
+display(sprintf('%g traces not yet analyzed \n',n2a));
+end
+    
+while goon & i<=n
+    correctIn=0;
+    if (atraces(i,5)==0 || reanalyze)
+    display(sprintf('Analyzing trace %g out of %g',i,n2a));
+       
+    [dt,dx,dy,dz,h]=MSD3D_CL(atraces(i,1),atraces(i,2),atraces(i,3));
+    if not(isempty(dt))  
+    %[cD,cN,cGamma,cL,h]=msdfitV2_CL(1,dt,dx,dy,dz);
+        %idxs=find(isreal(cL) & cL<thres);
+    %if not(isempty(idxs))
+     %   atraces(i,4)=mean(cD(idxs));
+   %else
+        atraces(i,4)=-1;
+    %end 
+        
+        display(sprintf('Current diffusion coefficient: %g',atraces(i,4)));
+        while not(correctIn)
+           
+        [x,y,buttons] = ginput(1);
+        switch buttons
+            case 1
+                atraces(i,4)=y;
+                correctIn=1;
+                display(sprintf('Diffusion coefficient selected=%g',y));
+            case 8
+            atraces(i,4)=-1;
+            correctIn=1;
+            display('Trace rejected');
+            case 32
+                correctIn=1;
+                display(sprintf('Choosing default diffusion coefficient=%g',atraces(i,4)));
+            otherwise
+                sprintf('Wrong command');
+                correctIn=0;
+        end
+        end
+        close(h);
+        atraces(i,5)=1;
+        ca_traces=atraces(1:i,:)
+    else
+        atraces(i,4)=-1;
+        atraces(i,5)=1;
+    end
+        i=i+1;
+    
+    else 
+        i=i+1;
+    end
+    
+    %save analysis.mat atraces
+    end
+    
+end
+        
+

@@ -1,0 +1,26 @@
+%function SB_g2=StrobingLaser_g2(tau,f)
+
+%tau is the correlation time scale and f is the frequency in which the
+%laser is strobed. 
+
+
+% this code is to calculate the g2 contribution due to the strobing laser.
+% it calculate <T(t)T(t+tau)>/<T(t)>^2, not the acutal g2 due to the
+% strobing laser. 
+
+% I want to first get rid of the strobing laser contribution before I fit
+% the two state model to the hairpin data. 
+
+%created by ZK 06182009
+
+
+function SB_g2=StrobingLaser_g2(tau,f)
+
+
+    for k=1:1:250
+
+        ff(k,:)=(8/pi^2)*cos((2*k-1)*2*pi*f*tau)./(2*k-1)^2;
+
+    end
+    
+   SB_g2=sum(ff,1)+1;

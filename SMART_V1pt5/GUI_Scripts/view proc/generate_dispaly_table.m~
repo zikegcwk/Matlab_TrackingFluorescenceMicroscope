@@ -1,0 +1,57 @@
+function output = generate_dispaly_table(hmm_output)
+
+
+
+
+hmm_size  = size(hmm_output.A,1)
+
+
+tgap = 1;
+if strmatch(hmm_output.fitChannelType{1},'gauss')
+tgap = 2  ;
+end
+
+emis_lable = [];
+stat_lable = [];
+etable = [];
+
+for i=1:hmm_size
+    
+    
+    emis_lable = [emis_lable; {['State ' num2str(i) ' \mu']}];
+    stat_lable = [stat_lable; {['State ' num2str(i)]}];
+    if tgap == 2
+        emis_lable = [emis_lable; {['State ' num2str(i) ' \sigma']}];
+    end
+    
+    temp_etable = cell(1,11);
+    for j =1:4
+        try
+            temp_etable{1,j+1}  = round(hmm_output.E{i,j}(1));
+        catch
+        end
+    end
+    etable = [etable;  temp_etable];
+    
+    temp_etable = cell(1,11);
+    if tgap == 2
+        for j =1:4
+            try
+                temp_etable{1,j+1}  = round(hmm_output.E{i,j}(2));
+            catch
+            end
+        end
+    end
+    etable = [etable;  temp_etable];
+    
+end
+    
+tlist = cell((hmm_size+1),11)
+tlist(1,1:hmm_size) = stat_lable
+tlist(2:end,1:hmm_size) = mat2cell(hmm_output.A,ones(hmm_size,1),ones(hmm_size,1))
+    
+etable(:,1) = emis_lable;
+
+
+
+

@@ -1,0 +1,20 @@
+function output = generate_clusters(handles)
+
+
+
+tv = get(handles.popupmenu3,'Value');
+ts = get(handles.popupmenu3,'String');
+
+
+numClusterList = 1:get(handles.popupmenu4,'Value');
+clustFitOutputs = GetClustsRatesMult_v2(handles.selected_data(:,7),ts{tv},numClusterList); 
+
+%ShowClustFitOutputs_v3(clustFitOutputs,handles.selected_data(:,2)',numClusterList,0.1,false,false,true)
+
+
+get(handles.popupmenu2,'Visible','on','Value',1,'String',)
+
+
+
+output = clustFitOutputs;
+

@@ -1,0 +1,3 @@
+function Sens = Gain2Sens(Gain)
+
+Sens = 10/10^(

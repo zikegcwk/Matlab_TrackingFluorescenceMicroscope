@@ -1,0 +1,21 @@
+function [D,CEFF,OMEGA,XI]=fcs_singleparticle_fit(tau,g,omega,xi)
+if (nargin<2 || nargin>4)
+    error('Syntax error : invalid number of arguments. Type "help fcs_singleparticle_fit" for usage.');
+else
+if nargin==2
+    f2fit=@(t,beta) g2(t,beta(1),beta(2),beta(3),beta(4));
+    beta0 = [1e-2 1e-2,1e-2,1e-2]
+    BETA=nlinfit(tau,g,f2fit,beta0);
+    [D,CEFF,OMEGA,XI]=
+elseif nargin==3
+    f2fit=@(t,beta) g2(t,beta(1),beta(2),beta(3));
+else %case nargin==4
+    f2fit=@(t,beta) g2(t,beta(1),beta(2));
+end
+    BETA=nlinfit(tau,g,f2fit);
+    [D,CEFF,O,Xi]=[
+    
+        function y=g2(t,Ceff,Omega,Xi,D)
+            1/(Ceff*Pi^(3/2))*1/((Omega^2+4*D*t)*sqrt((Omega/Xi)^2+4*D*t));
+        end
+        

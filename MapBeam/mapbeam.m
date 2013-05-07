@@ -1,0 +1,84 @@
+function [I1,bmap,scanmap]=mapbeam(dataid,tstart,tend,Iinput)
+
+
+grid_npointsx=20;
+grid_npointsy=20;
+
+load(sprintf('data_%g', dataid));
+
+Tstrob=1/(11000);
+Tbin=Tstrob/100;
+Twin=1e-2;
+Tsampl=1e-3;
+npointsfft=floor(Twin/Tbin);
+nwin=floor((tend-tstart)/Twin);
+
+if(nargin==3)
+I1=zeros(nwin,1);
+%cfft=zeros(npointsfft,1);
+kOfInterest=round(Tstrob/Tbin);
+%cnstart=1;
+I0=atime2bin(tags0,Tbin,tstart,tend);
+%ntags=length(tags0);
+display('start ffts');
+figure(1012);
+for i=1:nwin
+    if(mod(i,20)==0)
+    display(sprintf('window number %d \n',i));
+    end
+    %ctstart=tstart+(i-1)*Twin;
+    %ctend=ctstart+Twin;
+    %cI0=atime2bin(tags0(cnstart:ntags),Tbin,ctstart,ctend);
+    cI0=I0(1+(i-1)*npointsfft:i*npointsfft);
+    %display(sprintf('btime %d \n',toc));
+    tic;
+    cfft=fft(cI0,npointsfft);
+    cfft=abs(cfft); 
+    if(mod(i,20)==0)
+    display(sprintf('ffttime %d \n',toc));
+    end
+    %cnstart=find(tags0(cnstart:ntags)>ctend,1);
+    I1(i)=sum(cfft(kOfInterest-10:kOfInterest+10));
+    figure(1012), plot(cfft);
+    %I1(i)=cfft(kOfInterest);
+end
+figure, plot((1:nwin)*Twin,I1);
+else
+    I1=Iinput;
+end
+%sample modulation position by averaging within each window
+samplingFunction=@(x) mean(x);
+mod_x=binvector(ex2,floor(Twin/Tsampl),samplingFunction);
+mod_y=binvector(ex3,floor(Twin/Tsampl),samplingFunction);
+minx=min(mod_x);
+miny=min(mod_y);
+maxx=max(mod_x);
+maxy=max(mod_y);
+grid_dx=(maxx-minx)/grid_npointsx;
+grid_dy=(maxy-miny)/grid_npointsy;
+npos=length(I1);
+[scanmap,bins]=bin2d(mod_x,mod_y,minx,miny,maxx,maxy,grid_dx,grid_dy);
+[p,q]=size(scanmap);
+bmap=zeros(p,q);
+npoints=length(bins);
+for i=1:min(npoints,npos)
+    bmap(bins(i,1),bins(i,2))=bmap(bins(i,1),bins(i,2))+I1(i);
+end
+bmap=bmap./(max(1,scanmap));
+figure, plot(mod_x,mod_y);
+figure, pcolor(scanmap), title('scanmap');
+figure, pcolor(bmap), title('bmap');
+end
+
+function bv=binvector(v,dn,f2apply)
+nv=length(v);
+nbv=floor(nv/dn);
+bv=zeros(nbv,1);
+for i=1:nbv
+    bv(i)=f2apply(v((i-1)*dn+1:i*dn));
+end
+end
+
+
+
+    

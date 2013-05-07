@@ -1,0 +1,160 @@
+function FractionFoldedSimulation(ku, au1, ku1, au2, ku2, kf, af1, kf1, af2, kf2, time);
+
+%written Max Greenfeld - 12/04/07 
+%This is to calcualte the fraction of dwell time expected given input
+%kinetic parameters for single and double exponential fits of culumulatieve
+%fret histograms.
+
+% k is the rate constant for a single exponentila fit
+% a1 is the fast amplitude for a double expoential fit
+% k1 is the fast rate for a double exponential fit
+% a2 is the slow amplitude for a double exponential fit
+% k2 is the slow amplitude for a doulbe exponetial fit
+
+% time is the the longest time a calculate will be carreid out in practice
+% you might want to use mean trace length
+
+% Calling variable within the function
+
+% this is not quite perfect some variable appear to be flipped the stem
+% plot does not work need to add double exponentila for completness but It
+% does recapitulate the input variables so that is good add in random
+% starts and ends whay about photobleaching rate
+
+
+ku =0.4;
+au1=0.4;
+ku1=1;
+au2=0.6;
+ku2=0.2;
+
+kf=0.7;
+af1=0.4;
+kf1 =0.3;
+af2=0.5;
+kf2=3.4;
+
+time =200;
+numberofmolecules=150;
+
+
+tku=1/ku;
+tku1=1/ku1;
+tku2=1/ku2;
+
+tkf=1/kf;
+tkf1=1/kf1;
+tkf2=1/kf2;
+
+meanlowfret = 0.3;
+meanhighfret = 0.8;
+% step size for simulation
+% stepsize = 0.1;
+% matrixlength = time /stepsize;
+% 
+% A = zeros(matrixlength+1,5);
+% A(:,1)=(0:matrixlength)'*stepsize;
+% 
+% 
+% ysingle=singleexponential(ku,A(:,1));
+% A(:,2)=ysingle;
+% 
+% 
+% ydouble=(doubleexponential([au2 ku1 ku2],A(:,1)));
+% A(:,3)=ydouble;
+
+% need to generate random folding and unfolding events
+
+alltraces=[];
+for index=1:numberofmolecules;
+    
+startstate=rand;
+tracelength=0;
+B=zeros(500,4);
+
+if startstate <=0.5;
+    
+    i=1;
+    while tracelength<time;
+        
+      foldeddewll=exprnd(tkf);
+      B(i,1)=0;
+      B(i,2)=foldeddewll;
+      B(i,3)=meanhighfret;
+      B(i,4)= 3;
+      i=i+1;
+      
+      foldeddewll=exprnd(tku);
+      B(i,1)=3;
+      B(i,2)=foldeddewll;
+      B(i,3)=meanlowfret;
+      B(i,4)= -3;
+      i=i+1;
+        
+      tracelength=sum(B(:,2));
+      
+    end
+
+      B(i,1)=9;
+      B(i,2)=9;
+      B(i,3)=9;
+      B(i,4)= 9;
+
+
+else
+
+    
+    i=1;
+    while tracelength<time;
+        
+      foldeddewll=exprnd(tku); % these seem reversed
+      B(i,1)=3;
+      B(i,2)=foldeddewll;
+      B(i,3)=meanhighfret;
+      B(i,4)= -3;
+      i=i+1;
+      
+      foldeddewll=exprnd(tkf); % these seem reversed
+      B(i,1)=0;
+      B(i,2)=foldeddewll;
+      B(i,3)=meanhighfret;
+      B(i,4)= 3;
+      i=i+1;
+        
+      tracelength=sum(B(:,2));
+    end
+    
+      B(i,1)=9;
+      B(i,2)=9;
+      B(i,3)=9;
+      B(i,4)= 9;
+    
+end
+
+  
+position=find(B(:,2) >0);
+faketrace=B(position, 1:4);
+
+alltraces=cell2mat({alltraces;faketrace});
+
+end
+
+tempalltraces = sortrows(alltraces,1);
+positions=find(tempalltraces(:,1) <9);
+alltracesnonines=tempalltraces(positions, 1:4);
+
+
+
+FractionFoldedIndividualMoleculesSimulations(alltraces,time)
+kinanyfps2residualsSimulations(alltracesnonines,alltraces,time)
+
+
+
+
+% double exponentila generat a random number between 0 and 1 if it is
+% greater than one of the amplitudes go in one diredtion if it is greater
+% it is less than that number go in the other directoins
+
+
+
+

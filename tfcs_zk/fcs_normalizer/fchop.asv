@@ -1,0 +1,55 @@
+function [tau_c,g2_chopped1]=fchop(tau,g2,taumin,taumax,type)
+if nargin==3
+    taumax=max(tau);
+end
+
+if nargin==4
+    type='diffusion';
+end
+
+tauvec=min(find(tau>10^taumin)):1:max(find(tau<10^taumax));
+
+for j=1:1:3
+% %     fit=FCS_diffusion_fit(tau,g2{1,j},0.5,pi*0.5^2/0.532,[0 0],'poly');
+% %     theoryg2(j,:)=FCS_diff_poly(tau,fit{1,2}(1),fit{1,2}(2),fit{1,2}(3),fit{1,2}(4),fit{1,2}(5),fit{1,2}(6));
+% % 
+% %     theoryg2(j,:)=mean(g2{9,4});
+     theoryg2(j,:)=g2{1,2}(tauvec);
+% 
+end
+for j=1:1:size(g2,1)
+    for k=1:1:6
+        if k<4
+           if strcmp(type,'diffusion')    
+                g2_chopped1{j,k}=g2{j,k}(tauvec)./theoryg2(k,:)-1;
+           elseif strcmp(type,'tracking')
+                g2_chopped1{j,k}=(g2{j,k}(tauvec)+1)./(theoryg2(k,:)+1)-1;
+           end
+        else
+            for l=1:1:size(g2{j,k},1)
+                if strcmp(type,'diffusion')
+                    g2_chopped1{j,k}(l,:)=g2{j,k}(l,1:t_index)./theoryg2(k-3,1:t_index)-1;
+                elseif strcmp(type,'tracking')
+                    g2_chopped1{j,k}(l,:)=(g2{j,k}(l,1:t_index)+1)./(theoryg2(k-3,1:t_index)+1)-1;
+                end
+            end
+        end
+    end
+end
+
+if size(g2,2)>6
+    for j=1:1:size(g2,1)
+        g2_chopped1{j,7}=g2{j,7};
+    end
+end
+
+
+if size(g2,2)>7
+    for j=1:1:size(g2,1)
+        g2_chopped1{j,8}=g2{j,8};
+        g2_chopped1{j,9}=g2{j,9};
+        g2_chopped1{j,10}=g2{j,10};
+    end
+end
+
+

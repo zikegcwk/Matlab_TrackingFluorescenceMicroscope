@@ -1,0 +1,157 @@
+function [B,C]=meta_sm_fits(sorted,title)
+
+
+
+resolutionlimit = 1/25;
+xlimdltg = [-2.5 2.5];
+
+unfoldx= 40;
+singleku = [0.1 10];
+doubleku = [0.1 30];
+
+foldx=10;
+singlekf = [0.1 15];
+doublekf = [0.1 30];
+
+ymaximum = 25.5;
+rateaxes = 'log';
+
+
+% It is better to define the title at the beginning
+%title = ['Individual Molecule Fraction Folded'];
+lotsofticks = [1:250]*0.1;
+lessticls = [1:50]*0.5;
+
+
+for j=0:0
+figure1 = figure('Color',[1 1 1],'Name', title,'PaperPosition',[0 0 10 7.5],'papersize',[10 7.5]);  
+
+
+% file header
+annotation(figure1,'textbox','FontSize',7,'Position',[0.3 .993 0.9 0.01],'FitHeightToText','on','String',strcat(title, ' SM Fits'),'LineStyle','none');
+clipboard('copy',strcat(title, ' SM Fits'))
+
+% unfolding header
+annotation(figure1,'textbox','Position',[0.1837 0.993 0.3 0.015],'FitHeightToText','off','String','unfolding','LineStyle','none','FontWeight','Bold','VerticalAlignment','top', 'HorizontalAlignment','left','Color','k','EdgeColor', 'none');
+annotation(figure1,'rectangle','Position',[0.1837 0.98 0.3877 0.003],'FaceColor', 'k');
+% folding header
+annotation(figure1,'textbox','Position',[0.5918 0.993 0.3 0.015],'FitHeightToText','off','String','folding','LineStyle','none','FontWeight','Bold','VerticalAlignment','top', 'HorizontalAlignment','left','Color','g','EdgeColor', 'none');
+annotation(figure1,'rectangle','Position',[0.5918 0.98 0.3877 0.003],'FaceColor', 'g');
+
+
+
+%footers of double and single exponential
+annotation(figure1,'textbox','Position',[0.1837 0.013 0.3 0.02],'FontSize',8,'FitHeightToText','off','String','single exponential','LineStyle','none','FontWeight','Bold','VerticalAlignment','top', 'HorizontalAlignment','left','Color','r','EdgeColor', 'none');
+annotation(figure1,'rectangle','Position',[0.1837 0.005 0.1428 0.005],'FaceColor', 'r');
+annotation(figure1,'textbox','Position',[0.3469 0.013 0.3 0.02],'FontSize',8,'FitHeightToText','off','String','double exponential','LineStyle','none','FontWeight','Bold','VerticalAlignment','top', 'HorizontalAlignment','left','Color','b','EdgeColor', 'none');
+annotation(figure1,'rectangle','Position',[0.3469 0.005 0.2245 0.005],'FaceColor', 'b');
+
+annotation(figure1,'textbox','Position',[0.5918 0.013 0.3 0.02],'FontSize',8,'FitHeightToText','off','String','single exponential','LineStyle','none','FontWeight','Bold','VerticalAlignment','top', 'HorizontalAlignment','left','Color','r','EdgeColor', 'none');
+annotation(figure1,'rectangle','Position',[0.5918 0.005 0.1428 0.005],'FaceColor', 'r');
+annotation(figure1,'textbox','Position',[0.7551 0.013 0.3 0.02],'FontSize',8,'FitHeightToText','off','String','double exponential','LineStyle','none','FontWeight','Bold','VerticalAlignment','top', 'HorizontalAlignment','left','Color','b','EdgeColor', 'none');
+annotation(figure1,'rectangle','Position',[0.7551 0.005 0.2245 0.005],'FaceColor', 'b');
+
+
+
+
+
+k=1;
+
+% these modfi
+for  numbins = 0:4
+binspace=5*numbins;
+
+for   i=((1+10*j)+binspace):((10+10*j)+binspace)
+ 
+    % axes 0 and 1 are for the thermo and signal to noise
+    % axes 2 to 6 are for the unfolding
+    % axes 7 to 11 are for the folding
+    
+axes0=axes('FontName','Arial','FontSize',9,'Position',[0.0204 .08 0.06122 .9],'Parent',figure1,'Visible','on','box','on', 'ylim', [0 ymaximum], 'xlim', xlimdltg,'color','none','YMinorTick','off','YGrid', 'on','YMinorGrid', 'off','YTick',lessticls,'YtickLabel',[]);
+xlabel(axes0,'\Delta G [kcal/mol]');
+hold(axes0,'all');
+scatter0 = scatter(sorted(i,1),0.5*k,'Parent',axes0,'Marker','square','MarkerEdgeColor',[0 0 0],'MarkerFaceColor','k','SizeData',[24],'DisplayName','unfoldingfast');
+    
+axes1=axes('FontName','Arial','FontSize',9,'Position',[0.102 .08 0.06122 .9],'Parent',figure1,'Visible','on','box','on', 'ylim', [0 ymaximum], 'xlim', [resolutionlimit unfoldx],'color','none','XScale','log' , 'YMinorTick','off','YGrid', 'off','YMinorGrid', 'off', 'YtickLabel',[],'YTick',lessticls);
+xlabel(axes1,'S/N');
+hold(axes1,'all')
+
+axes2=axes('FontName','Arial','FontSize',9,'Position',[0.1887 .08 0.06122 .9],'Parent',figure1,'Visible','on','box','on', 'ylim', [0 ymaximum], 'xlim',[resolutionlimit unfoldx],'color','none','XScale','log','YMinorTick','off','YGrid', 'on','YMinorGrid', 'off', 'YtickLabel',[],'YTick',lessticls);
+%axes2=axes('FontName','Arial','FontSize',10,'Position',[0.1837 .08 0.06122 .9],'Parent',figure1,'Visible','on','box','on', 'ylim', [0 ymaximum], 'xlim',[0.1 foldx],'color','none','XScale','log','YMinorTick','off','YGrid', 'on','YMinorGrid', 'off', 'YtickLabel',[],'YTick',lessticls);
+
+ylabel(axes2,'Residuals of Normalized Counts');
+xlabel(axes2,'Time [sec]');
+hold(axes2,'all');
+scatter1 = scatter(sorted(i,11:510),(sorted(i,511:1010)+.5*k),'Parent',axes2,'Marker','square','MarkerEdgeColor',[1 0 0],'SizeData',[24],'DisplayName','unfoldingfast');
+
+axes3=axes('FontName','Arial','FontSize',9,'Position',[0.2653 .08 0.06122 .9],'Parent',figure1,'Visible','on','box','on', 'ylim', [0 ymaximum], 'xlim', singleku,'color','none','XScale',rateaxes,'YMinorTick','off','YGrid', 'on','YMinorGrid', 'off', 'YtickLabel',[],'YTick',lessticls);
+xlabel(axes3,'ku [sec^{-1}]');
+hold(axes3,'all');
+scatter1 = scatter(sorted(i,3),0.5*k,'Parent',axes3,'Marker','square','MarkerEdgeColor','r','MarkerFaceColor','r','SizeData',[24],'DisplayName','unfoldingfast');
+
+axes4=axes('FontName','Arial','FontSize',9,'Position',[0.3519 .08 0.06122 .9],'Parent',figure1,'Visible','on','box','on', 'ylim', [0 ymaximum], 'xlim', [resolutionlimit unfoldx],'color','none','XScale','log','YMinorTick','off','YGrid', 'on','YMinorGrid', 'off', 'YtickLabel',[],'YTick',lessticls);
+ylabel(axes4,'Residuals of Normalized Counts');
+xlabel(axes4,'Time [sec]');
+hold(axes4,'all');
+scatter1 = scatter(sorted(i,11:510),(sorted(i,1011:1510)+.5*k),'Parent',axes4,'Marker','square','MarkerEdgeColor','r','MarkerEdgeColor',[0 0 1],'SizeData',[24],'DisplayName','unfoldingfast');
+
+axes5=axes('FontName','Arial','FontSize',9,'Position',[0.4286 .08 0.06122 .9],'Parent',figure1,'Visible','on','box','on', 'ylim', [0 ymaximum], 'xlim', [0 1],'color','none','XScale','linear','YMinorTick','off','YGrid', 'on','YMinorGrid', 'off', 'YtickLabel',[],'YTick',lessticls);
+xlabel(axes5,'Amplitude');
+hold(axes5,'all');
+scatter1 = scatter(sorted(i,4),0.5*k,'Parent',axes5,'Marker','d','MarkerEdgeColor','r','MarkerFaceColor','b','MarkerEdgeColor',[0 0 1],'SizeData',[24],'DisplayName','unfoldingfast');
+
+axes6=axes('FontName','Arial','FontSize',9,'Position',[.5102 .08 0.06122 .9],'Parent',figure1,'Visible','on','box','on', 'ylim', [0 ymaximum], 'xlim', doubleku,'color','none','XScale',rateaxes,'YMinorTick','off','YGrid', 'on','YMinorGrid', 'off', 'YtickLabel',[],'YTick',lessticls, 'XMinorTick','on');
+xlabel(axes6,'ku [sec^{-1}]');
+hold(axes6,'all');
+scatter1 = scatter(sorted(i,5),0.5*k,'Parent',axes6,'Marker','square','MarkerEdgeColor','b','MarkerFaceColor','b','MarkerEdgeColor',[0 0 1],'SizeData',[24],'DisplayName','unfoldingfast');
+scatter1 = scatter(sorted(i,6),0.5*k,'Parent',axes6,'Marker','square','MarkerEdgeColor','g','MarkerFaceColor','g','MarkerEdgeColor',[0 0 1],'SizeData',[24],'DisplayName','unfoldingfast');
+
+%Places Minor Ticks On Residual Crves
+axes2=axes('FontName','Arial','FontSize',9,'Position',[0.1887 .08 0.06122 .9],'Parent',figure1,'Visible','on','box','on', 'ylim', [0 ymaximum], 'xlim',[resolutionlimit unfoldx],'color','none','XScale','log','YMinorTick','off','YGrid', 'off','YMinorGrid', 'off', 'YtickLabel',[],'YTick',lotsofticks);
+%axes2=axes('FontName','Arial','FontSize',10,'Position',[0.1837 .08 0.06122 .9],'Parent',figure1,'Visible','on','box','on', 'ylim', [0 ymaximum], 'xlim',[0.1 foldx],'color','none','XScale','log','YMinorTick','off','YGrid', 'off','YMinorGrid', 'off', 'YtickLabel',[],'YTick',lotsofticks);
+
+axes4=axes('FontName','Arial','FontSize',9,'Position',[0.3519 .08 0.06122 .9],'Parent',figure1,'Visible','on','box','on', 'ylim', [0 ymaximum], 'xlim', [resolutionlimit unfoldx],'color','none','XScale','log','YMinorTick','off','YGrid', 'off','YMinorGrid', 'off', 'YtickLabel',[],'YTick',lotsofticks);
+
+
+% This section start the folding axes i.e. axes 7 to 11
+
+axes7=axes('FontName','Arial','FontSize',9,'Position',[0.5968 .08 0.06122 .9],'Parent',figure1,'Visible','on','box','on', 'ylim', [0 ymaximum], 'xlim',[resolutionlimit foldx],'color','none','XScale','log','YMinorTick','off','YGrid', 'on','YMinorGrid', 'off', 'YtickLabel',[],'YTick',lessticls);
+
+ylabel(axes7,'Residuals of Normalized Counts');
+xlabel(axes2,'Time [sec]');
+hold(axes7,'all');
+scatter1 = scatter(sorted(i,1511:2010),(sorted(i,2011:2510)+.5*k),'Parent',axes7,'Marker','o','MarkerEdgeColor',[1 0 0],'SizeData',[24],'DisplayName','unfoldingfast');
+
+axes8=axes('FontName','Arial','FontSize',9,'Position',[0.6736 .08 0.06122 .9],'Parent',figure1,'Visible','on','box','on', 'ylim', [0 ymaximum], 'xlim', singlekf,'color','none','XScale',rateaxes,'YMinorTick','off','YGrid', 'on','YMinorGrid', 'off', 'YtickLabel',[],'YTick',lessticls);
+xlabel(axes8,'kf [sec^{-1}]');
+hold(axes8,'all');
+scatter1 = scatter(sorted(i,7),0.5*k,'Parent',axes8,'Marker','square','MarkerEdgeColor','r','MarkerFaceColor','r','SizeData',[24],'DisplayName','unfoldingfast');
+
+axes9=axes('FontName','Arial','FontSize',9,'Position',[0.7601 .08 0.06122 .9],'Parent',figure1,'Visible','on','box','on', 'ylim', [0 ymaximum], 'xlim', [resolutionlimit foldx],'color','none','XScale','log','YMinorTick','off','YGrid', 'on','YMinorGrid', 'off', 'YtickLabel',[],'YTick',lessticls);
+ylabel(axes9,'Residuals of Normalized Counts');
+xlabel(axes9,'Time [sec]');
+hold(axes9,'all');
+scatter1 = scatter(sorted(i,1511:2010),(sorted(i,2511:3010)+.5*k),'Parent',axes9,'Marker','o','MarkerEdgeColor','r','MarkerEdgeColor',[0 0 1],'SizeData',[24],'DisplayName','unfoldingfast');
+
+axes10=axes('FontName','Arial','FontSize',9,'Position',[0.8367 .08 0.06122 .9],'Parent',figure1,'Visible','on','box','on', 'ylim', [0 ymaximum], 'xlim', [0 1],'color','none','XScale','linear','YMinorTick','off','YGrid', 'on','YMinorGrid', 'off', 'YtickLabel',[],'YTick',lessticls);
+xlabel(axes10,'Amplitude');
+hold(axes10,'all');
+scatter1 = scatter(sorted(i,8),0.5*k,'Parent',axes10,'Marker','d','MarkerEdgeColor','r','MarkerFaceColor','b','MarkerEdgeColor',[0 0 1],'SizeData',[24],'DisplayName','unfoldingfast');
+
+axes11=axes('FontName','Arial','FontSize',9,'Position',[0.9184 .08 0.06122 .9],'Parent',figure1,'Visible','on','box','on', 'ylim', [0 ymaximum], 'xlim', doublekf,'color','none','XScale',rateaxes,'YMinorTick','off','YGrid', 'on','YMinorGrid', 'off', 'YtickLabel',[],'YTick',lessticls);
+xlabel(axes11,'kf [sec^{-1}]');
+hold(axes11,'all');
+scatter1 = scatter(sorted(i,9),0.5*k,'Parent',axes11,'Marker','square','MarkerEdgeColor','b','MarkerFaceColor','b','MarkerEdgeColor',[0 0 1],'SizeData',[24],'DisplayName','unfoldingfast');
+scatter1 = scatter(sorted(i,10),0.5*k,'Parent',axes11,'Marker','square','MarkerEdgeColor','g','MarkerFaceColor','g','MarkerEdgeColor',[0 0 1],'SizeData',[24],'DisplayName','unfoldingfast');
+
+%Places Minor Ticks On Residual Crves
+axes7=axes('FontName','Arial','FontSize',9,'Position',[0.5968 .08 0.06122 .9],'Parent',figure1,'Visible','on','box','on', 'ylim', [0 ymaximum], 'xlim',[resolutionlimit foldx],'color','none','XScale','log','YMinorTick','off','YGrid', 'off','YMinorGrid', 'off', 'YtickLabel',[],'YTick',lotsofticks);
+axes9=axes('FontName','Arial','FontSize',9,'Position',[0.7601 .08 0.06122 .9],'Parent',figure1,'Visible','on','box','on', 'ylim', [0 ymaximum], 'xlim', [resolutionlimit foldx],'color','none','XScale','log','YMinorTick','off','YGrid', 'off','YMinorGrid', 'off', 'YtickLabel',[],'YTick',lotsofticks);
+
+
+
+k=k+1;
+end
+end
+end
+

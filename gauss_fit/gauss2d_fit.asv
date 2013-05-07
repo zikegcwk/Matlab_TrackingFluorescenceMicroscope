@@ -1,0 +1,118 @@
+% GAUSS2D_FIT  Gaussian fitting
+%   [beta, Gaussian] = gauss_fit(x, y, z, guess) Fits the Gaussian function
+%     G(x) = a + b exp( -2 (x-c)^2/d^2 -2(y-e)^2/f^2)
+%   to the (x,y,z) data provided. Returns beta = [a b c d e f]. 'guess' is a 
+%   required parameter specifying the starting point guess = [a0 b0 c0 d0 e0 f0]
+%   of the nonlinear solver.  It must be reasonably close to correct in order 
+%   to guarantee convergence.
+function [beta, Gaussian]= gauss2d_fit(x, y, z, guess, plot_fit);
+
+use_newton_step = false;
+
+MAX_ITER = 100;
+
+if nargin < 4,
+    error('Four arguments required.');
+end;
+
+line_search_alpha = 0.5;
+line_search_beta = 0.5;
+epsilon_stop = 1e-4;
+
+G = inline('beta(1) + beta(2) * exp(-2*(x-beta(3)).^2/beta(4)^2 - 2*(y-beta(5)).^2/beta(6)^2)', 'x', 'y', 'beta');
+
+% We perform the fit by minimizing the function 
+%   f(beta) = 1/2 int_x (G(x, beta) - y)^2 
+% with a simple gradient method. 
+
+guess = reshape(guess, numel(guess), 1);
+
+dx = x(1, 2) - x(1, 1);
+dy = y(2) - y(1);
+
+beta = guess;
+
+grad_f = 1;
+num_iter = 1;
+while norm(grad_f) > epsilon_stop & num_iter <= MAX_ITER; 
+    a = beta(1);
+    b = beta(2);
+    c = beta(3);
+    d = beta(4);
+    e = beta(5);
+    f = beta(6);
+    
+    residual = G(x, y, beta) - z;
+    
+    dGda = 1;
+    dGdb = exp(-2*(x-c).^2/d^2 -2*(y-e).^2/f^2);
+    dGdc = b*4*(x-c)/d^2 .* dGdb;
+    dGdd = b*4*(x-c).^2/d^3 .* dGdb;
+    dGde = b*4*(y-e)/f^2 .* dGdb;
+    dGdf = b*4*(y-e).^2/f^3 .* dGdb;
+        
+    grad_f = zeros(size(beta));
+    grad_f(1) = dx*dy*sum(sum(dGda.*residual));
+    grad_f(2) = dx*dy*sum(sum(dGdb.*residual));
+    grad_f(3) = dx*dy*sum(sum(dGdc.*residual));
+    grad_f(4) = dx*dy*sum(sum(dGdd.*residual));
+    grad_f(5) = dx*dy*sum(sum(dGde.*residual));
+    grad_f(6) = dx*dy*sum(sum(dGdf.*residual));
+    
+    if use_newton_step, %num_iter > num_gradient_steps,
+        Hess = zeros(6);
+    
+        Hess(1,1) = sum(sum(dGda.*dGda))*dx*dy;
+        Hess(1,2) = sum(sum(dGda.*dGdb))*dx*dy;
+        Hess(1,3) = sum(sum(dGda.*dGdc))*dx*dy;
+        Hess(1,4) = sum(sum(dGda.*dGdd))*dx*dy;
+        Hess(1,5) = sum(sum(dGda.*dGde))*dx*dy;
+        Hess(1,6) = sum(sum(dGda.*dGdf))*dx*dy;
+        
+        Hess(2,2) = sum(sum(dGdb.*dGdb))*dx*dy;
+        Hess(2,3) = sum(sum(dGdb.*dGdc + 4*(x-c)/d^2 .* dGdb .* residual))*dx*dy;
+        Hess(2,4) = sum(sum(dGdb.*dGdd + 4*(x-c).^2/d^3 .* dGdb .* residual))*dx*dy;
+        Hess(2,5) = sum(sum(dGdb.*dGde + 4*(y-e)/f^2 .* dGdb .* residual))*dx*dy;
+        Hess(2,6) = sum(sum(dGdb.*dGdf + 4*(y-e).^2/f^3 .* dGdb .* residual))*dx*dy;
+        
+        Hess(3,3) = sum(sum(dGdc.*dGdc + (16*b*(x-c).^2/d^4 - 4*b/d^2).*dGdb .* residual))*dx*dy;
+        Hess(3,4) = sum(sum(dGdc.*dGdd + (16*b*(x-c).^3/d^5 - 8*b*(x-c)/d^3).*dGdb .* residual))*dx*dy;
+        Hess(3,5) = sum(sum(dGdc.*dGde + (16*b*(y-e).^2/f^4 - 4*b/f^2).*dGdb .* residual)))*dx*dy;
+        Hess(3,6) = sum(sum(dGdc.*dGdf + (16*b*(y-e).^3/f^5 - 8*b*(y-e)/f^3).*dGdb .* residual)))*dx*dy;
+        
+        Hess(4,4) = sum(sum(dGdd.*dGdd + (16*b*(x-c).^4/d^6 - 12*b*(x-c).^2/d^4).*dGdb .* residual))*dx*dy;
+        Hess(4,5) = sum(sum(dGdd.*dGde) + 16*b*(x-c).^2.*(y-e)/(d^3*f^2) .* dGdb .* residual)*dx*dy;
+        Hess(4,6) = sum(sum(dGdd.*dGdf) + 16*b*(x-c).^2.*(y-e).^2/(d^3*f^3) .* dGdb .* residual)*dx*dy;       
+        
+        Hess(5,5) = sum(sum(dGde.*dGde) + (16*b*(y-e).^2/f^4 - 4*b/f^2).*dGdb .* residual)*dx*dy;
+        Hess(5,6) = sum(sum(dGde.*dGdf) + (16*b*(y-e).^4/f^6 - 12*b*(y-e).^2/f^4).*dGdb .* residual))*dx*dy;
+        
+        Hess(6,6) = sum(sum(dGdf.*dGdf))*dx*dy;
+        
+        Hess = triu(Hess) + triu(Hess)' - diag(diag(Hess));
+
+        step_dir = -Hess\grad_f;
+        newton_decr = -grad_f'*step_dir;
+    else
+        step_dir = -grad_f;
+    end;
+    
+    t = 1;
+    while dx*dy*sum(sum((G(x, y, beta + t * step_dir) - z).^2)) > dx*dy*sum(sum((G(x, y, beta) - z).^2)) + line_search_alpha * t * grad_f'*step_dir,
+        t = t * line_search_beta;
+    end;
+    beta = beta + t * step_dir;
+    num_iter = num_iter + 1;
+end;
+
+Gaussian = G;
+fprintf('Residual: %g\n', dx*dy*sum(sum((G(x, y, beta)-z).^2)));
+
+if nargin > 4,
+    if plot_fit,
+              
+        %legend('data', 'Gaussian fit');
+    end;
+end;
+
+return;

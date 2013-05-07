@@ -1,0 +1,3 @@
+function [tauav, gav] = tfcs_avg(tau, g, avgtime, N),
+
+tauav = logspace(

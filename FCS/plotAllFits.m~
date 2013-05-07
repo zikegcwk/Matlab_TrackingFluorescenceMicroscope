@@ -1,0 +1,17 @@
+function plotAllFits(y,idxs,omeg,xi)
+n=length(idxs);
+h=get(gca,'ColorOrder');
+for j=1:n
+    i=idxs(j);
+    semilogx(y(i).tau,y(i).g,'Color',h(mod(i-1,7)+1,:));
+    hold on;
+end
+legend([y(idxs).tag]','Location','best');
+for j=1:n
+    i=idxs(j);
+    gth=g2_singleparticle(y(i).tau,y(i).N,y(i).D,omeg,xi);
+    semilogx(y(i).tau,gth,'Color',h(mod(i-1,7)+1,:),'Line':');
+    hold on;
+end
+xlabel('\tau');
+ylabel('g_{2}(\tau)');

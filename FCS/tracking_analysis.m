@@ -1,0 +1,79 @@
+function [tF,IF,txyF,xF,yF,tD,Dx,Dy]=tracking_analysis(filename,tL,tH,rload,filenamet);
+persistent txy x y t0 I_binned dt power;%v1 v2 t_v1 t_v2 t0;
+if nargin <2;
+    tL=0;
+    tH = 100;
+end;
+
+if nargin<4 || isempty(txy);
+    rload = 1;
+end;
+
+if rload;
+    load(filename);
+    txy = txy - .6;
+%    t_v1=t_v1-0.6; % offset
+%    t_v2=t_v2-0.6; % offset
+end;
+
+%dt = 1e-2;
+%t = min(t0):dt:max(t0);
+I0 = I_binned/dt;%histc(t0,t)/dt;
+t = (0:length(I_binned)-1)*dt;
+IF = I0(t>tL & t<tH);
+tF = t(t>tL & t<tH);
+
+%x = 10*v1;
+%y = 10*v2;
+%txy = t_v1;
+
+ix = txy>tL & txy<tH;
+xF = x(ix);
+yF = y(ix);
+txyF = txy(ix);
+
+bin = 1:(floor(length(tF)/2));
+Dx = 0*bin;
+Dy = 0*bin;
+tD = bin*mean(diff(txyF));
+
+for kk=1:length(bin);
+    tmp_ix = 1:bin(kk):length(txyF);
+    %tmp = estD(txyF,xF,yF,bin(kk));
+    Dx(kk) = var(diff(xF(tmp_ix)))/2/tD(kk);
+    Dy(kk) = var(diff(yF(tmp_ix)))/2/tD(kk);
+end;
+
+%disp(mean(Dx(tD>1&tD<1.2)))
+%disp(mean(Dy(tD>1&tD<1.2)))
+
+
+figure;
+subplot(2,1,1);
+plot(t,I0,tF,IF,'r');
+axis([0 t(end) 0 250000]);
+subplot(2,1,2);
+plot(txy,[x y],txyF,[xF yF],'r');
+if exist('power','var');
+    pow = power;
+    hold on;
+    plot(txy,1000*pow,'k:');
+    hold off;
+end;
+axis([0 t(end) 0 120]);
+
+if nargin > 4;;
+    load(filenamet);
+	addpath x:\ajb\matlab\;
+	tau = logspace(-6,1,500);
+	g = corr_Laurence(t0(t0>tL&t0<tH),t0(t0>tL&t0<tH),tau);
+	g = g(1:end-1);
+	tau = tau(1:end-1);
+	%rmpath x:\ajb\matlab\;
+	
+	figure;
+	semilogx(tau,g,'.-');
+end;
+
+figure;
+semilogx(tD,[Dx; Dy;]);

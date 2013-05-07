@@ -1,0 +1,13 @@
+%this is a function that fits the poission pdf, give data x.
+function poifit(x)
+
+
+
+
+x=1:25; M=data24;
+modelFun =  @(p,x) p.^x .* exp(-p)./factorial(x);
+startingVals = mean(x);
+[coefEsts,r] = nlinfit(x, M, modelFun, startingVals);
+lambda(6)=coefEsts; % lambda(4)=1;
+
+

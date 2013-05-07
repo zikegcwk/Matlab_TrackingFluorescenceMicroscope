@@ -1,0 +1,5 @@
+function HumanStruct = GetLockInSettings
+    axy = srspoll_mex('overload.stanford.edu', 12000);
+    az = srspoll_mex('overload.stanford.edu', 12001);
+    
+return;

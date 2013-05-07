@@ -1,0 +1,88 @@
+function [B,C]=Trace_Concatenate_1(numbers,concentration,fps)
+
+% A quick script to merge kinetics and fret distributions extracted from diffrent movies together
+% k=kineticsmerger(numberoffiles,prefix,numbers)
+% 
+% numberoffiles - the number of files to merge
+% kinprefix set to (kinetics)cascade
+% FRETprefix set to '(4)(FRETDIST)'
+% numbers - the file number.
+%%
+% comment on this section when not runing the script directly
+numbers =[];
+numbers=[15:29];
+conc = '070107 Lipid-SA 146-149 AllU 20mM Ba2+';
+%concentration=1;
+
+% openbracket = '(';
+% closebracket = ' mM)';
+
+% end coment ount section
+
+rawprefix = '(donor_acceptor_defmlc)cascade';
+kinmlcprefix = '(kinetics_defmlc)cascade';
+
+
+
+%rawprefix
+numberholder={};
+finaldata = [];
+i=length(numbers);
+suffix = '(4).dat';
+openbracket = '(';
+closebracket = ' mM)';
+for index=1:i,
+
+    number=num2str(numbers(index)); 
+   extractfilename = strcat(rawprefix,number,suffix)
+if exist(extractfilename)==2  
+    s = dir(extractfilename);
+    filesize = s.bytes
+    if  exist(extractfilename)==2  & filesize>0
+    tempdata = importdata(extractfilename);
+    
+    finaldata = [finaldata;tempdata];
+    numbername = strcat(number,'.');
+    numberholder = strcat(numberholder,numbername);
+    end
+end
+
+end
+filename = strcat(rawprefix,numberholder,openbracket,conc,closebracket,suffix);
+filename = char(filename)
+save(filename,'finaldata','-ascii');
+K = filename;
+
+%kinmlcprefix
+numberholder={};
+finaldata = [];
+i=length(numbers);
+suffix = '(4).dat';
+openbracket = '(';
+closebracket = ' mM)';
+for index=1:i,
+
+    number=num2str(numbers(index)); 
+   extractfilename = strcat(kinmlcprefix,number,suffix)
+if exist(extractfilename)==2  
+    s = dir(extractfilename);
+    filesize = s.bytes
+    if  exist(extractfilename)==2  & filesize>0
+    tempdata = importdata(extractfilename);
+    
+    finaldata = [finaldata;tempdata];
+    numbername = strcat(number,'.');
+    numberholder = strcat(numberholder,numbername);
+    end
+end
+
+end
+filename = strcat(kinmlcprefix,numberholder,openbracket,conc,closebracket,suffix);
+filename = char(filename)
+save(filename,'finaldata','-ascii');
+K2 = filename;
+
+
+filename = strcat(numberholder,openbracket,conc,closebracket,suffix);
+filename = char(filename);
+clipboard('copy',filename)

@@ -1,0 +1,15 @@
+taumin=-5;
+taumax=0;
+xi=0;
+w=390e-9;
+d0=1e-3;
+display('Starting calculation');
+display(sprintf('Current time is : %s',datestr(now,14)));
+description='type=FCS;OD=0;tube=8018a;sample=ato dye;stock=ato dye;buffer=PBS ph7.2;tag=concentration';
+display(sprintf('Starting to process data set with description : \n %s',description)); 
+ds=createDataSets(specs,1:15,1e-7,16:30,1e-8,31:45,0.5e-7,46:60,0.2e-7,61:75,0.5e-8,76:100,0.25e-8);
+y=autoprocess_dcoeff(ds,taumin,taumax,w,xi,d0);
+display(sprintf('Current time is : %s',datestr(now,14)));
+filetosave=sprintf('%s.mat',datestr(now,'yymmdd_HHMMSS'));
+display(sprintf('Processing of data set completed. Saving results in file %s',filetosave));
+save(filetosave,'description','ds','y','taumin','taumax','w','xi','d0');

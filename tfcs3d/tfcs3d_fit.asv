@@ -1,0 +1,16 @@
+function g = tfcs3d_fit(beta, tau);
+
+omegaxy = 14e3*2*pi;
+omegaz = 100e3*2*pi;
+r = beta(1);
+w = 1;
+a = 5;
+z0 = 4;
+Gxy = [beta(2), beta(3)]; %166, 187
+Gz = beta(4);%beta(4); %227
+nxy = 9e-3; %beta(6); % 9e-3
+nz = 4e-3; %beta(7); %4e-3
+D = 2.4; %2.4
+
+g = tfcs3d(tau, omegaxy, omegaz, r, w, a, z0, Gxy, Gz, nxy, nz, D);
+return;

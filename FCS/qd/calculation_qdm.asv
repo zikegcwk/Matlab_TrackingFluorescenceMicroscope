@@ -1,0 +1,22 @@
+cd w:\data\2008\10008\CR0\try1
+qd_fcs(15);
+cd w:\data\2008\100208\CR1\sample2
+qd_fcs(15);
+cd w:\data\2008\100208\CR10\sample1
+qd_fcs(15);
+cd w:\data\2008\100208\CR10\sample2
+qd_fcs(15);
+cd w:\data\2008\100208\CR5\sample1
+qd_fcs(15);
+cd w:\data\2008\100208\CR5\sample2
+qd_fcs(15);
+cd w:\data\2008\100208\CR50\sample1
+qd_fcs(15);
+cd w:\data\2008\100208\CR50\sample2
+qd_fcs(15);
+cd w:\data\2008\100208\CR100\sample1
+qd_fcs(15);
+cd w:\data\2008\100208\CR100\sample2
+qd_fcs(15);
+
+

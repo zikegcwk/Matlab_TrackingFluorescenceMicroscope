@@ -1,0 +1,86 @@
+%function qd_fcs calculate FCS curves for file_N files and average them.
+%The taumin and taumax are to specify the limite of tau. N is the number of
+%points calculated in tau. 
+
+function [tau,ave_gR,ave_gG,ave_gX] = qd_fcs(s_N,e_N,taumin,taumax,N),
+
+if nargin<1
+    s_N=0;
+    e_N=14;
+    taumin=-6;
+    taumax=-1;
+    N=200;
+end
+ 
+if nargin<3
+    taumin=-6;
+    taumax=-1;
+    N=200;
+end
+    
+s_N
+
+%see if there are multiple tags within a data file.    
+load(sprintf('data_%g.mat',s_N));
+tagsSize=size(tags);
+plot_flag=tagsSize(1,2);
+clear tags;
+
+%if there are multiple tags, creat auto,auto,and cross plots.
+if plot_flag==2
+        gR=zeros(e_N-s_N+1,N-1);
+        gG=zeros(e_N-s_N+1,N-1);
+        gX=zeros(e_N-s_N+1,N-1);
+    
+    for j=s_N:1:e_N
+        [tau,gR(j,:),gG(j,:),gX(j,:)]=lfcs(j,taumin,taumax,N);
+    end
+
+    ave_gR=mean(gR,1);
+    ave_gG=mean(gG,1);
+    ave_gX=mean(gX,1);
+
+
+    scrsz = get(0,'ScreenSize');
+
+    figure('Name',cd,'Position',[1 scrsz(4)/2-100 scrsz(3) scrsz(4)/2-100])
+    
+    subplot(1,3,1);
+    xlabel('correlation time scale (S)','FontSize',14);
+    ylabel('correlation value','FontSize',14);
+    title(cd);
+    semilogx(tau,ave_gR,'r');
+
+    subplot(1,3,2)
+    xlabel('correlation time scale (S)','FontSize',14);
+    ylabel('correlation value','FontSize',14);
+    title(cd);
+    semilogx(tau,ave_gG,'g');
+    
+    subplot(1,3,3)   
+    xlabel('correlation time scale (S)','FontSize',14);
+    ylabel('correlation value','FontSize',14);
+    title(cd);
+    semilogx(tau,ave_gX,'k');
+
+end 
+
+
+if plot_flag==1
+    g=zeros(s_N,N-1);
+    for j=s_N:1:e_N
+        [tau,g(j,:)]=lfcs(j,taumin,taumax,N);
+    end
+    ave_g=mean(g,1);
+
+    scrsz = get(0,'ScreenSize');
+
+    figure('Name',cd)
+    xlabel('correlation time scale (S)','FontSize',14);
+    ylabel('correlation value','FontSize',14);
+    title(cd);
+    semilogx(tau,ave_g,'r');
+end 
+
+
+    

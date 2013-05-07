@@ -1,0 +1,11 @@
+%function std_msd calculates the weighted g2 std,given by how long each
+%trace is (stored at list)
+function std_msd(list,g2)
+
+T=list(:,3)-list(:,2);
+
+g2_avg=ave_msd(T,g2);
+
+for j=1:1:size(g2,1)
+    tempD=
+    

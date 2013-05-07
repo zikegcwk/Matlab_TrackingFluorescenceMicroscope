@@ -1,0 +1,77 @@
+function [b,D,n,gammas]=calib_modulation2(ndimfit,omega,dt,varargin)
+%varargin contains dx, dy, dz
+ndim=length(varargin);
+if ndim==0
+    error('No data to fit');
+    return
+end
+
+figure;
+colororder='bgr';
+
+b=zeros(ndim,1);
+D=zeros(ndim,1);
+n=zeros(ndim,1);
+gammas=zeros(ndim,ndimfit);
+
+D0 = 6;
+n0_xy = 0.01;
+gamma_c0_xy = 10*2*pi; 85*2*pi;
+gamma_p0_xy = 1040; 180*2*pi;
+b0=1;
+
+
+for i=1:ndim
+        data2fit=varargin{i};
+     
+    if ndimfit==1
+        beta0=[b0,D0,n0_xy,gamma_c0_xy];
+        fit4msd=@(beta,t) g_1_mod(omega,beta,t);
+        beta_fit=nlinfit(dt,data2fit,fit4msd,beta0);
+        semilogx(dt,varargin{i},colororder(i),dt,fit4msd(beta_fit,dt),'k');
+    else
+        beta0=[b0,D0,n0_xy,gamma_c0_xy,gamma_p0_xy];
+        fit4msd=@(beta,t) g_2_mod(omega,beta,t);
+        beta_fit=nlinfit(dt,data2fit,fit4msd,beta0);
+        gammas(i,2)=beta_fit(5);
+        semilogx(dt,varargin{i},colororder(i),dt,fit4msd(beta_fit,dt),'k');
+    end
+        b(i)=beta_fit(1);
+        D(i)=beta_fit(2);
+        n(i)=beta_fit(3);
+        gammas(i,1)=beta_fit(4);
+hold all;
+end
+end
+
+function y = g_1_mod(omega,beta, t)
+b=beta(1);
+D = beta(2);
+n = beta(3);
+gamma_c = beta(4);
+fit4modulation=@(deltaT) b^2./(2*deltaT).*(gamma_c^2/(omega^2+gamma_c^2)*(1-cos(omega*deltaT)));
+
+y = fit4modulation(t) + D - D/gamma_c*(1-n^2*gamma_c^2/(2*D))*(1-exp(-gamma_c*t))./t;
+
+%g = inline('beta(1) + beta(1)./(beta(3)*t)*(1-beta(2)^2*beta(3)^2/(2*beta(1))).*(exp(-beta(3)*t)-1)', 'beta', 't'); % 1st order fitting function
+
+end
+
+function y = g_2_mod(omega,beta, t)
+
+b=beta(1);
+D = beta(2);
+n = beta(3);
+gamma_c = beta(4);
+gamma_p = beta(5);
+nu = sqrt(gamma_p^2 - 4*gamma_c*gamma_p);
+% the following is wrong:
+%y = D - D ./ t * exp(-gamma_p * t / 2).*(2/nu*sinh(nu*t/2)...
+%    + (1/gamma_p - 1/gamma_c + (n^2*gamma_c)/(2*D))*(-exp(gamma_p*t/2) + cosh(nu*t/2) + gamma_p/nu*sinh(nu*t/2)))./t;
+
+
+fit4modulation=@(deltaT) x^2./(2*deltaT).*((gamma_p*gamma_c)^2/((omega^2-gamma_p*gamma_c)^2+(gamma_p*omega)^2)*(1-cos(omega*deltaT)));
+
+ y = D - D./t .* (2./nu*sinh(nu*t/2).*exp(-gamma_p*t/2) + (1/gamma_p - 1/gamma_c + n^2*gamma_c/(2*D)) .* ...
+          (-1 + exp(-gamma_p*t/2).*(cosh(nu*t/2) + gamma_p/nu*sinh(nu*t/2))));
+end

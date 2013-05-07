@@ -1,0 +1,10 @@
+display('Processing T20...');
+cd ..\dnaT20\
+[tau,gss,ncounts]=processDataSet(1:50,{[1,2],[3,4],[1,3]},-8,0,300); save('dnaT20_1to50.mat','tau','gss','ncounts');
+display('Processing T8');
+cd ..\dnaT8\
+[tau,gss,ncounts]=processDataSet(1:50,{[1,2],[3,4],[1,3]},-8,0,300);
+save('dnaT8_1to50.mat','tau','gss','ncounts');
+
+
+

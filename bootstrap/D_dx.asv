@@ -1,0 +1,2 @@
+function D=D_dx(dx)
+temp=dx.^2/2/0.6;

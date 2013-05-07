@@ -1,0 +1,42 @@
+% TFCS3D_STAT  computes tracking-FCS curve for the fluorescence signal
+% arising from a single stationary beam.
+%
+%   g = TFCS_HARMONIC(tau, Wvec, Gamma, Nvec, D, Rg, k, n) returns the
+%   autocorrelation at time lags tau for a system of independent 
+%   harmonically-bound Brownian particles.  Wvec is a vector specifying beam
+%   waists along the three cartesian axes.  Gamma is a 3xM matrix
+%   containing the poles of the tracking system dynamics. (M is the order
+%   of the dynamical system).  Nvec is a vector specifing noise densities
+%   along each Cartesian axis.  D is the diffusion coefficient. Rg is the
+%   radius of gyration. k is the spring constant and n is the number of
+%   particles.
+function g = tfcs_harmonic(tau, Wvec, Gammavec, Nvec, D, Rg, k, n);
+
+if nargin < 8,
+    error('You must specify all arguments.');
+end;
+
+if size(Gammavec, 2) ~= 1,
+    error('Sorry, right now only first-order systems are supported.');
+end;
+
+if length(Wvec) < 3 | length(Gammavec) < 3 | length(Nvec) < 3 | length(D) > 1,
+    error('Invalid argument dimensions');
+end;
+
+sigma0sq = D./Gammavec + Gammavec.*Nvec.^2/2;
+barsig0sq = sigma0sq + Wvec.^2/4 + Rg^2;
+
+g = zeros(size(tau));
+
+for tt = 1:length(tau),
+    t = tau(tt);
+    sigmatsq = exp(-Gammavec*t).*(D./Gammavec + Gammavec.*Nvec.^2/2);
+    barsigtsq = sigmatsq;
+
+    g(tt) = ((n-1)*prod(barsig0sq) / sqrt(prod(barsig0sq.^2 - barsigtsq.^2)) + ...
+        prod(barsig0sq) / sqrt(prod(barsig0sq.^2 - (barsigtsq + Rg^2*exp(-k*t)).^2)))/n;
+    
+end;
+
+return;

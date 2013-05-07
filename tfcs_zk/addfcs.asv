@@ -1,0 +1,18 @@
+%function addfcs will add g1 and g2 together to give g3. 
+function g3=addfcs(varargin)
+if nargin==2
+    g1=varargin{1};
+    g2=varargin{2};
+end
+
+if nargin==3
+    g1=varargin{1};
+    g2=varargin{2};
+    N=varargin{3};
+    
+
+
+
+n1=size(g1,1);
+n2=size(g2,1);
+g3=cat(1,g1,g2);

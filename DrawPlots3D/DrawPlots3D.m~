@@ -1,0 +1,191 @@
+% DRAWPLOTS3D Plots raw data from 3D tracking experiments.
+%   [tags0, t0, x0, y0, z0, I0] = DrawPlots3D(filenum)
+%   Loads the data stored in the file named 'data_(filenum)' and returns it
+%   in the return arguments.  By default, the raw data is plotted in Figure
+%   1010. Plots will consist of 2 to 3 panels. The top panel will always be
+%   the fluorescence, and the middle will always be the tracking stage
+%   positions. The lower panel will be used if additional NIDAQ channels
+%   were monitored and saved to the data file. Descriptive data contained
+%   in the data file will be displayed on the command prompt.
+%
+%   DrawPlots3D(filenum, dt) allows specification of the bin time dt for
+%   down-sampling fluorescence data, both for the plot and for the returned
+%   quantity I0.
+%
+%   See also msd3d, lfcs
+%
+% Version 1.1 May 15, 2008 by KM: Updated for new file formats 
+%         1.2 May 29, 2008 by KM: Add feature that colors fluorescence data
+%            black if z stage was stuck on its upper rail.
+function [tags, t0, x0, y0, z0, t, I] = DrawPlots3D(varargin),
+
+detect_max_z = 1; % set to 1 to highlight when z stage was at upper rail
+max_z_thresh = 39.95;
+
+default_dt = 1e-1;
+
+if nargin == 1,
+    load(sprintf('data_%g', varargin{1}));
+    dt = default_dt;
+else
+    if nargin == 2,
+        load(sprintf('data_%g', varargin{1}));
+        if class(varargin{2}) ~= 'char',
+            dt = varargin{2};
+            plotformat = 'default';
+        else
+            plotformat = varargin{1};
+        end;
+    else
+        error('Invalid number of arguments.');
+    end;
+end;
+
+if exist('tags0') | exist('tags1'),
+    fprintf('Old data file type.\n');
+    I = cell(1,1);
+    t = cell(1,1);
+    
+    if exist('tags0'),
+        tags{1} = tags0;
+        clear tags0;
+        [I{1}, t{1}] = atime2bin(tags{1}, dt);
+    end;
+
+    if exist('tags1') 
+        tags{2} = tags1;
+        clear tags1;
+        [I{2}, t{2}] = atime2bin(tags{2}, dt);
+    end;
+else
+    I = cell(size(tags));
+    for u = 1:length(tags),
+        [I{u}, t{u}] = atime2bin(tags{u}, dt);
+    end;
+end;
+
+if plotformat == 'default',
+    figure(1010); clf;
+    if exist('NIDAQ_Out')
+        if length(NIDAQ_Out),
+            numPlots = 3;
+        else
+            numPlots = 2;
+        end;
+    else if exist('exI'),
+            numPlots = 3;
+        else
+            numPlots = 2;
+        end;
+    end;
+    subplot(numPlots, 1, 1);
+
+    hold all;
+    for u = 1:length(I),
+        plot(t{u}, I{u}*1e-3/dt);
+    end;
+    hold off;
+    set(gca, 'Box', 'On');
+
+    xlabel('Time [s]', 'FontSize', 14);
+    ylabel('Fluorescence [kHz]', 'FontSize', 14);
+    set(gca, 'FontSize', 12);
+    title(sprintf('data %g.mat', varargin{1}));
+
+    if detect_max_z, % color fluorescence data black if z stage was on upper rail.
+        zmax_ix = find(z0 >= max_z_thresh); % all points where z is on the rail
+        if numel(zmax_ix) > 0,
+            zmax_diff = diff(zmax_ix);
+            diffix = find(zmax_diff > 1); % where the z stage switches away from the rail
+
+            timeRailOn = t0([zmax_ix(1); zmax_ix(diffix+1)]);
+            timeRailOff = t0(zmax_ix(diffix));
+
+            % The final period for which the z stage is on the rail will
+            % usually not be caught by the above criteria.
+            if length(timeRailOff) < length(timeRailOn), 
+                timeRailOff(end+1) = t0(zmax_ix(end));
+            end;
+
+            hold on;
+            for u = 1:length(t),
+                ZmaxI = zeros(size(I{u}));
+                for v = 1:length(timeRailOn),
+                    Iix = find(t{u} > timeRailOn(v) & t{u} < timeRailOff(v));
+                    plot(t{u}(Iix), I{u}(Iix)*1e-3/dt, 'k');
+                end;
+            end;
+            hold off;
+            fprintf('Warning: data tainted due to z stage on upper rail.\n');
+            fprintf('\tThis fluorescence data is plotted in black.\n');
+        end;
+    end;
+
+    subplot(numPlots, 1, 2);
+
+    plot(t0, [x0,y0,z0]);
+    xlabel('Time [s]', 'FontSize', 14);
+    ylabel('Position [\mum]', 'FontSize', 14);
+    set(gca, 'FontSize', 12);
+    set(gca, 'LineWidth', 1);
+
+    if numPlots == 3,
+        subplot(3, 1, 3);
+        hold all;
+        if exist('NIDAQ_Out'),
+             for u = 1:size(NIDAQ_Out, 2),
+                plot(t0, NIDAQ_Out(:, u));
+            end;
+        else
+            if exist('exI'),
+                plot(t0, exI);
+            end;
+
+            if exist('ex2')
+                plot(t0, ex2);
+            end;
+
+            if exist('ex3')
+                plot(t0, ex3);
+            end;
+        end;
+        hold off;
+
+        xlabel('Time [s]', 'FontSize', 14);
+        ylabel('NIDAQ data', 'FontSize', 14);
+        set(gca, 'FontSize', 12);
+        set(gca, 'LineWidth', 1);
+    end;
+
+    if exist('tags_Desc'),
+        if length(tags_Desc),
+            fprintf('Descriptions of fluorescence data:\n');
+            for u = 1:length(tags_Desc),
+                fprintf('\tChannel %g: ', u);
+                fprintf(tags_Desc{u});
+                fprintf('\n');
+            end;
+        end;
+    end;
+
+    if exist('NIDAQ_Desc');
+        if length(NIDAQ_Desc),
+            fprintf('Descriptions of NIDAQ data:\n');
+            for u = 1:length(NIDAQ_Desc),
+                fprintf('\tChannel %g: ', u+2);
+                fprintf(NIDAQ_Desc{u});
+                fprintf('\n');
+            end;
+        end;
+    end;
+end;
+
+if lower(plotformat) == 'dna',
+
+end;
+
+if nargout == 0,
+    clear tags t0 x0 y0 z0 t I; % so that returned values are not displayed
+end;
+
+return;

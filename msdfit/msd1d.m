@@ -1,0 +1,6 @@
+% y = msd2(t, D, n, gammac)
+function y = msd1(t, D, n, gamma_c);
+
+y = D - D/gamma_c*(1-n^2*gamma_c^2/(2*D))*(1-exp(-gamma_c*t))./t;
+
+return;

@@ -1,0 +1,27 @@
+%thislist variable should be pre-loaded for this script
+j=1; quitloop=-1; ll=[440   378   560   420];
+datalist=[];
+while ((j<=size(thislist,1))&&(quitloop<0)),
+    fnum=floor(thislist(j,1));
+    load(strcat('data_',num2str(fnum),'.mat'));
+    startP=daq_out(find(t0>thislist(2,2),1));
+    stopP=daq_out(find(t0>thislist(2,3),1));
+    mchoice=0;
+    MSD3D(fnum,thislist(j,2),thislist(j,3)); thisfig = gcf; set(thisfig,'Position',ll);
+    mchoice=menu('Options','Input values','Remove last','Next event','Quit (without recording this event)');
+    if (mchoice==1),
+        prompt={'Apparent MSD(0.1s):','Uncertainty:'};
+        name='Diffusion-coefficient-by-eye';
+        numlines=1;
+        defaultanswer={'0','0'};
+        answer=cell2mat(inputdlg(prompt,name,numlines,defaultanswer));
+        if (mchoice==2),
+            datalist=[datalist; thislist(j,:) startP stopP answer(1) answer (2)];
+            j=j+1;
+        elseif (mchoice==3)
+            quitloop=1;
+        end;
+        datalist,
+    end;
+    ll = get(thisfig,'Position'); close(thisfig);
+end

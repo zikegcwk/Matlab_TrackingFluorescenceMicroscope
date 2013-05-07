@@ -1,0 +1,5 @@
+function [axy, az] = SRSStruct2Vec(SRSStruct)
+
+axy = [2, SRSStruct.
+
+return;
